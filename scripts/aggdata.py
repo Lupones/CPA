@@ -50,7 +50,7 @@ def process_intdata(workload, input_dir, output_dir, alone):
         print("The workload {} has no 'int' files".format(wl_name))
         return
 
-    dfs = read_and_merge(files, ["interval", "app", "CPU"], alone)
+    dfs = read_and_merge(files, ["interval", "app"], alone)
 
     # Store csv
     wl_csv = "{}/{}.csv".format(output_dir, wl_name)
@@ -77,7 +77,7 @@ def process_data(workload, input_dir, output_dir, alone):
             print("The workload {} has no '{}' files".format(wl_name, kind))
             continue
 
-        dfs = read_and_merge(files, ["app", "CPU"], alone)
+        dfs = read_and_merge(files, ["app"], alone)
 
         # Store csv
         dfs.to_csv("{}/{}_{}.csv".format(output_dir, wl_name, kind))
