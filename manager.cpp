@@ -152,16 +152,17 @@ void loop(
 		adjust_time(start_int, start_glob, interval, time_int_us, adj_delay_us);
 
 		// Get CPU of manager
-		int cpu_manager =  get_self_cpu_id();
-		LOGINF("----> Manager is in CPU {}"_format(cpu_manager));
+		//int cpu_manager =  get_self_cpu_id();
+		//LOGINF("----> Manager is in CPU {}"_format(cpu_manager));
 
 		// Process tasks...
 		for (const auto &task_ptr : schedlist)
 		{
 			Task &task = *task_ptr;
 			// Get CPU of task
-			int cpu_id = get_cpu_id(task.pid);
-			LOGINF("----> Task {} is in CPU {}"_format(task.pid,cpu_id));
+			//int cpu_id = get_cpu_id(task.pid);
+			//LOGINF("----> Task {} is in CPU {}"_format(task.pid,cpu_id));
+
 			// Read stats
 			const counters_t counters = perf.read_counters(task.pid, catpol->get_cat())[0];
 			task.stats.accum(counters);
