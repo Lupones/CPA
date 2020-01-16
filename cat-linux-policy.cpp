@@ -2173,7 +2173,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 		switch (CLOSvalue)
 		{
 			case 1: // Non-critical
-				if((MPKIL3Task >= 10) & (HPKIL3Task >= 20) & (IPCTask <= ipcLow)) // 1. BULLY
+				if((MPKIL3Task >= 10) & (HPKIL3Task >= 10) & (IPCTask <= ipcLow)) // 1. BULLY
 				{
 					excluded[taskID] = true;
 					outlier.push_back(std::make_pair(taskID,0));
@@ -2229,7 +2229,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					LOGINF("Critical task {} is profitable so continue critical"_format(taskID));
 					outlier.push_back(std::make_pair(taskID,1));
 				}
-				else if((MPKIL3Task >= 10) & (HPKIL3Task >= 20) & (IPCTask <= ipcLow)) // 2. BULLY
+				else if((MPKIL3Task >= 10) & (HPKIL3Task >= 10) & (IPCTask <= ipcLow)) // 2. BULLY
 				{
 					excluded[taskID] = true;
 					critical_apps--;
@@ -2266,7 +2266,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 				break;
 
 			case 5: case 6: // Greedy or squanderer
-				if((MPKIL3Task >= 10) & (HPKIL3Task >= 20) & (IPCTask <= ipcLow)) // 1. BULLY
+				if((MPKIL3Task >= 10) & (HPKIL3Task >= 10) & (IPCTask <= ipcLow)) // 1. BULLY
 				{
 					excluded[taskID] = true;
 					include_application(taskID,taskPID,itT,CLOSvalue);
