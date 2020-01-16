@@ -250,6 +250,8 @@ class CriticalPhaseAware: public LinuxBase
 	double icov = 1;
 	double hpkil3Limit = 0;
 
+	uint32_t LLC_MAX_WAYS = 20;
+
     // Masks and number of ways of CLOS
 	uint64_t maskCLOS2 = 0xfffff;
 	uint64_t maskCLOS3 = 0xfffff;
@@ -348,6 +350,8 @@ class CriticalPhaseAware: public LinuxBase
 	void divide_2_critical(uint64_t clos);
 	void divide_3_critical(uint64_t clos, bool limitDone);
 	virtual void apply(uint64_t current_interval, const tasklist_t &tasklist);
+	uint64_t get_mask_critical(uint64_t num_ways);
+	uint64_t get_mask_noncritical(uint64_t num_ways);
 
 };
 typedef CriticalPhaseAware CPA;

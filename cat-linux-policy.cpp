@@ -1312,15 +1312,154 @@ void CriticalAwareV4::apply(uint64_t current_interval, const tasklist_t &tasklis
 
 
 
-/////////////// CRITICAL-AWARE v3 ///////////////
+/////////////// CRITICAL PHASE-AWARE ///////////////
 /*
  * Update configuration method allows to change from one
  * cache configuration to another, i.e. when a different
  * number of critical apps is detected
  */
+
+
+uint64_t CriticalPhaseAware::get_mask_critical(uint64_t num_ways) {
+	switch (num_ways) {
+		case 1:
+			return 0x80000;
+			break;
+		case 2:
+			return 0xc0000;
+			break;
+		case 3:
+			return 0xe0000;
+			break;
+		case 4:
+			return 0xf0000;
+			break;
+		case 5:
+			return 0xf8000;
+			break;
+		case 6:
+			return 0xfc000;
+			break;
+		case 7:
+			return 0xfe000;
+			break;
+		case 8:
+			return 0xff000;
+			break;
+		case 9:
+			return 0xff800;
+			break;
+		case 10:
+			return 0xffc00;
+			break;
+		case 11:
+			return 0xffe00;
+			break;
+		case 12:
+			return 0xfff00;
+			break;
+		case 13:
+			return 0xfff80;
+			break;
+		case 14:
+			return 0xfffc0;
+			break;
+		case 15:
+			return 0xfffe0;
+			break;
+		case 16:
+			return 0xffff0;
+			break;
+		case 17:
+			return 0xffff8;
+			break;
+		case 18:
+			return 0xffffc;
+			break;
+		case 19:
+			return 0xffffe;
+			break;
+		case 20:
+			return 0xfffff;
+			break;
+		default:
+			return 0xfffff;
+			break;
+	}
+}
+
+uint64_t CriticalPhaseAware::get_mask_noncritical(uint64_t num_ways) {
+	switch (num_ways) {
+		case 1:
+			return 0x00001;
+			break;
+		case 2:
+			return 0x00003;
+			break;
+		case 3:
+			return 0x00007;
+			break;
+		case 4:
+			return 0x0000f;
+			break;
+		case 5:
+			return 0x0001f;
+			break;
+		case 6:
+			return 0x0003f;
+			break;
+		case 7:
+			return 0x0007f;
+			break;
+		case 8:
+			return 0x000ff;
+			break;
+		case 9:
+			return 0x001ff;
+			break;
+		case 10:
+			return 0x003ff;
+			break;
+		case 11:
+			return 0x007ff;
+			break;
+		case 12:
+			return 0x00fff;
+			break;
+		case 13:
+			return 0x01fff;
+			break;
+		case 14:
+			return 0x03fff;
+			break;
+		case 15:
+			return 0x07fff;
+			break;
+		case 16:
+			return 0x0ffff;
+			break;
+		case 17:
+			return 0x1ffff;
+			break;
+		case 18:
+			return 0x3ffff;
+			break;
+		case 19:
+			return 0x7ffff;
+			break;
+		case 20:
+			return 0xfffff;
+			break;
+		default:
+			return 0xfffff;
+			break;
+	}
+
+}
+
+
 void CriticalPhaseAware::update_configuration(std::vector<pair_t> v, std::vector<pair_t> status, uint64_t num_critical_old, uint64_t num_critical_new)
 {
-
 	uint64_t new_clos;
 
 	// 1. Update global variables
@@ -1345,7 +1484,7 @@ void CriticalPhaseAware::update_configuration(std::vector<pair_t> v, std::vector
 	{
 		critical_apps = 0;
 		for (int clos = 1; clos <= 8; clos += 1)
-			LinuxBase::get_cat()->set_cbm(clos,0xfffff);
+			LinuxBase::get_cat()->set_cbm(clos,get_mask_critical(LLC_MAX_WAYS));
 
 		for (const auto &item : v)
 		{
@@ -1443,25 +1582,22 @@ void CriticalPhaseAware::update_configuration(std::vector<pair_t> v, std::vector
 	switch (num_critical_new)
 	{
 		case 1:
-			maskCLOS2 = 0xfff00;
-			maskCLOS4 = 0xfff00;
-			maskCLOS3 = 0xfff00;
-			maskNonCrCLOS = 0x003ff;
+			maskCLOS2 = get_mask_critical(LLC_MAX_WAYS*0.6);
+			maskNonCrCLOS = get_mask_noncritical(LLC_MAX_WAYS*0.5);
 			break;
 		case 2:
-			maskCLOS2 = 0xfff80;
-			maskCLOS3 = 0xfff80;
-			maskCLOS4 = 0xfff80;
-           	maskNonCrCLOS = 0x001ff;
+			maskCLOS2 = get_mask_critical(LLC_MAX_WAYS*0.65);
+           	maskNonCrCLOS = get_mask_noncritical(LLC_MAX_WAYS*0.45);
 			break;
 		case 3:
-			maskCLOS2 = 0xfffc0;
-			maskCLOS3 = 0xfffc0;
-			maskCLOS4 = 0xfffc0;
-           	maskNonCrCLOS = 0x000ff;
+			maskCLOS2 = get_mask_critical(LLC_MAX_WAYS*0.7);
+           	maskNonCrCLOS = get_mask_noncritical(LLC_MAX_WAYS*0.4);
 		default:
 			break;
 	}
+
+	maskCLOS3 = maskCLOS2;
+	maskCLOS4 = maskCLOS2;
 
 	LinuxBase::get_cat()->set_cbm(1,maskNonCrCLOS);
 	LinuxBase::get_cat()->set_cbm(2,maskCLOS2);
@@ -2230,55 +2366,43 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
         {
             case 1:
                 // 1 critical app = 12cr10others
-                maskCLOS2 = 0xfff00;
-				maskCLOS3 = 0xfff00;
-				maskCLOS4 = 0xfff00;
-                num_ways_CLOS_2 = 12;
-				num_ways_CLOS_3 = 12;
-				num_ways_CLOS_4 = 12;
-                maskNonCrCLOS = 0x003ff;
-                num_ways_CLOS_1 = 10;
+                maskCLOS2 = get_mask_critical(LLC_MAX_WAYS*0.6);
+                num_ways_CLOS_2 = LLC_MAX_WAYS*0.6;
+                maskNonCrCLOS = get_mask_noncritical(LLC_MAX_WAYS*0.5);
+                num_ways_CLOS_1 = LLC_MAX_WAYS*0.5;
                 state = 1;
                 break;
             case 2:
                 // 2 critical apps = 13cr9others
-                maskCLOS2 = 0xfff80;
-				maskCLOS3 = 0xfff80;
-				maskCLOS4 = 0xfff80;
-                num_ways_CLOS_2 = 13;
-				num_ways_CLOS_3 = 13;
-				num_ways_CLOS_4 = 13;
-                maskNonCrCLOS = 0x001ff;
-                num_ways_CLOS_1 = 9;
+                maskCLOS2 = get_mask_critical(LLC_MAX_WAYS*0.65);
+                num_ways_CLOS_2 = LLC_MAX_WAYS*0.65;
+                maskNonCrCLOS = get_mask_noncritical(LLC_MAX_WAYS*0.45);
+                num_ways_CLOS_1 = LLC_MAX_WAYS*0.45;
                 state = 2;
                 break;
             case 3:
                 // 3 critical apps = 14cr8others
-                maskCLOS2 = 0xfffc0;
-				maskCLOS3 = 0xfffc0;
-				maskCLOS4 = 0xfffc0;
-                num_ways_CLOS_2 = 14;
-				num_ways_CLOS_3 = 14;
-				num_ways_CLOS_4 = 14;
-                maskNonCrCLOS = 0x000ff;
-                num_ways_CLOS_1 = 8;
+                maskCLOS2 = get_mask_critical(LLC_MAX_WAYS*0.7);
+                num_ways_CLOS_2 = LLC_MAX_WAYS*0.7;
+                maskNonCrCLOS = get_mask_noncritical(LLC_MAX_WAYS*0.4);
+                num_ways_CLOS_1 = LLC_MAX_WAYS*0.4;
                 state = 3;
                 break;
             default:
                 // no critical apps or more than 3 = 20cr20others
-                maskCLOS2 = 0xfffff;
-				maskCLOS3 = 0xfffff;
-				maskCLOS4 = 0xfffff;
-                num_ways_CLOS_2 = 20;
-				num_ways_CLOS_3 = 20;
-				num_ways_CLOS_4 = 20;
-                maskNonCrCLOS = 0xfffff;
-                num_ways_CLOS_1 = 20;
+                maskCLOS2 = get_mask_critical(LLC_MAX_WAYS);
+                num_ways_CLOS_2 = LLC_MAX_WAYS;
+                maskNonCrCLOS = get_mask_noncritical(LLC_MAX_WAYS);
+                num_ways_CLOS_1 = LLC_MAX_WAYS;
                 state = 4;
                 break;
         } // close switch
 
-        num_shared_ways = 2;
+        num_ways_CLOS_3 = num_ways_CLOS_2;
+		num_ways_CLOS_4 = num_ways_CLOS_2;
+		maskCLOS3 = maskCLOS2;
+		maskCLOS4 = maskCLOS2;
+		num_shared_ways = 2;
 
 		if (state != 4)
 		{
