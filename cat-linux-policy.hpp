@@ -253,14 +253,6 @@ class CriticalPhaseAware: public LinuxBase
 	uint32_t LLC_MAX_WAYS = 20;
 
     // Masks and number of ways of CLOS
-	uint64_t maskCLOS2 = 0xfffff;
-	uint64_t maskCLOS3 = 0xfffff;
-	uint64_t maskCLOS4 = 0xfffff;
-    uint64_t num_ways_CLOS_2 = 20;
-	uint64_t num_ways_CLOS_3 = 20;
-	uint64_t num_ways_CLOS_4 = 20;
-    uint64_t maskNonCrCLOS = 0xfffff;
-    uint64_t num_ways_CLOS_1 = 20;
 	uint64_t prev_critical_apps = 0;
     int64_t num_shared_ways = 0;
 
