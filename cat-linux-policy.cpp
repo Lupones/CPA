@@ -1810,7 +1810,7 @@ void CriticalPhaseAware::halve_LLC_space(pid_t taskPID)
 void CriticalPhaseAware::increase_noncritical_llc_space(uint32_t new_ways_ncr) {
     uint32_t ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
     if (new_ways_ncr > LLC_MAX_WAYS) {
-		new_ways_ncr = increased from;
+		new_ways_ncr = LLC_MAX_WAYS;
 	}
 	LOGINF("[LLC] CLOS 1 increased from {} to {} ways"_format(ways,new_ways_ncr));
 	uint32_t diff = new_ways_ncr - ways;
