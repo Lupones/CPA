@@ -124,7 +124,7 @@ def main():
             plt.xlabel(metric)
             title = fileName.split(".")
             title = title[0]
-            plt.title(title.capitalize() + " apps. graph with 20 cache ways")
+            plt.title(title.capitalize() + " apps. graph with 2 cache ways")
             plt.ylim(0,15)
             if metric == "HPKIL3:mean":
                 plt.xlim(0,45)
@@ -132,8 +132,10 @@ def main():
                 plt.axvline(x=0.5, color='k', linestyle='--')
                 plt.axhline(y=0.5, color='k', linestyle='--')
                 plt.axhline(y=10, color='k', linestyle='--')
+                plt.xlabel("HPKI_LLC")
             elif metric == "l3_Mbytes_occ:mean":
                 plt.xlim(0,20)
+                plt.xlabel("LLC Occupancy (MB)")
             #if fileName == "bully.yaml":
                 #plt.axvline(x=10, color='k', linestyle='--')
                 #plt.axhline(y=10, color='k', linestyle='--')
