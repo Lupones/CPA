@@ -70,9 +70,10 @@ def main():
 
                 if name == "interval" or "power" in name:
                     df.ix[numW,policy] = dfworkload[name+':mean'].max()
+                    df.ix[numW,policy+':std'] = dfworkload[name+':std'].max()
                 else:
                     df.ix[numW,policy] = dfworkload[name+':mean'].mean()
-
+                    df.ix[numW,policy+':std'] = dfworkload[name+':std'].mean()
 
                 dictNames[name] = df
 
