@@ -1809,11 +1809,8 @@ void CriticalPhaseAware::halve_LLC_space(pid_t taskPID)
 
 void CriticalPhaseAware::increase_noncritical_llc_space(uint32_t new_ways_ncr) {
     uint32_t ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
-    if (new_ways_ncr > LLC_MAX_WAYS) {
-		new_ways_ncr = increased from;
-	}
-	LOGINF("[LLC] CLOS 1 increased from {} to {} ways"_format(ways,new_ways_ncr));
-	uint32_t diff = new_ways_ncr - ways;
+    LOGINF("[LLC] CLOS 1 increased from {} to {} ways"_format(ways,new_ways_ncr));
+    uint32_t diff = new_ways_ncr - ways;
 
     uint64_t schem = LinuxBase::get_cat()->get_cbm(1);
     LOGINF("[LLC] Old schemata: 0x{:x}"_format(schem));
@@ -2445,7 +2442,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 				uint32_t maxID = x->first;
 				auto it = std::find_if(v_ipc.begin(), v_ipc.end(),[&maxID](const auto& tuple) {return std::get<0>(tuple) == maxID;});
 				double maxIPC = std::get<1>(*it);
-				auto itID = std::find_if(id_pid.begin(), id_pid.end(),[&maxID](const auto& tuple){return std::get<0>(tuple) == maxID;});
+				auto itID = std::find_if(id_pid.begin(), id_pid.end(),[&taskID](const auto& tuple){return std::get<0>(tuple) == taskID;});
 				taskPID = std::get<1>(*itID);
 
 				if ((maxIPC >= ipcMedium) & (limit_task[maxID] == false))
