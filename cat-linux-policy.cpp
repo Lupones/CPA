@@ -2138,6 +2138,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						 LOGINF("There are no isolated CLOSes available --> remain in CLOS 1");
 					outlier.push_back(std::make_pair(taskID,0));
 					excluded[taskID] = true;
+					critical_apps--;
 				}
 				else // 5. NON-CRITICAL
 				{
