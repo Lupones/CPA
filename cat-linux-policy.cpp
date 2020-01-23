@@ -2175,7 +2175,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						critical_apps++;
 						change_in_outliers = true;
 					}
-					else if ((l3_occup_mb > limit_space) & (HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)) // 4. GREEDY
+					else if ((HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)) // 4. GREEDY
 					{
 						LOGINF("Task {} is still GREEDY!"_format(taskID));
 						outlier.push_back(std::make_pair(taskID,0));
