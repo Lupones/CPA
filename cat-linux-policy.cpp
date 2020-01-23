@@ -1957,8 +1957,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 				id_phase_change.push_back(taskID);
 
 			// Add to valid_mpkil3 queue
-			if (excluded[taskID] == false)
-            	deque_mpkil3.push_front(MPKIL3);
+			//if (excluded[taskID] == false)
+            deque_mpkil3.push_front(MPKIL3);
 
 			// Store queue modified in the dictionary
 			valid_mpkil3[taskID] = deque_mpkil3;
