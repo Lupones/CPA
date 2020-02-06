@@ -70,10 +70,12 @@ def main():
 
                 if name == "interval" or "power" in name:
                     df.ix[numW,policy] = dfworkload[name+':mean'].max()
-                    df.ix[numW,policy+':std'] = dfworkload[name+':std'].max()
+                    #df.ix[numW,policy+':std'] = dfworkload[name+':std'].max()
+                elif name == "geoipc":
+                    df.ix[numW, policy] = scipy.stats.gmean(dfworkload['ipc:mean'],axis=0)
                 else:
                     df.ix[numW,policy] = dfworkload[name+':mean'].mean()
-                    df.ix[numW,policy+':std'] = dfworkload[name+':std'].mean()
+                    #df.ix[numW,policy+':std'] = dfworkload[name+':std'].mean()
 
                 dictNames[name] = df
 
@@ -87,7 +89,9 @@ def main():
         show_name = name.replace("/", "-")
         for policy in args.policies:
             if policy != args.defaultPolicy:
-                if name == "ipc":
+                if name == "geoipc":
+                    df["%gain"+policy] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
+                elif name == "ipc":
                     df["%gain"+policy] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
                     #df["%gainCAV2"] = ((df["criticalAwareV2"] / df["noPart"]) - 1) * 100
                 else:

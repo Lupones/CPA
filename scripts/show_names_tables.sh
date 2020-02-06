@@ -7,7 +7,7 @@ workloads=/home/lupones/manager/experiments/$1/$2.yaml
 inputdir=/home/lupones/manager/experiments/$1
 outputdir=/home/lupones/manager/experiments/$1
 
-sudo python3 ./show_names_tables.py -w $workloads -id $inputdir -od $outputdir -n stp -n antt -n power/energy-pkg/ -n power/energy-ram/ -n interval -n unfairness -n ipc -p noPart -p CPA -p CPA_v3 -p CPA_idle 
+sudo python3 ./show_names_tables.py -w $workloads -id $inputdir -od $outputdir -n stp -n antt -n power/energy-pkg/ -n power/energy-ram/ -n interval -n unfairness -n ipc -n geoipc -p noPart -p Dunn -p CA -p CPA -p CPA_no_LLC 
 
 
 #sudo python3 ./show_names_tables.py -w $workloads -id $inputdir -od $outputdir -n stp -n antt -n power/energy-pkg/ -n power/energy-ram/ -n interval -n unfairness -n ipc -p noPart -p criticalAware  -p CAV2_Schwetman_0 -p CAV2_Schwetman_1 -p CAV2_Schwetman_2 -p CAV2_Schwetman_3 -p CAV2_Schwetman_4 -p CAV2_Schwetman_5 -p cad
