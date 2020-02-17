@@ -2354,8 +2354,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 			auto it = std::find_if(v_ipc.begin(), v_ipc.end(),[&taskID](const auto& tuple) {return std::get<0>(tuple) == taskID;});
 			double ipcTask = std::get<1>(*it);
 
-			auto it2 = std::find_if(taskIsInCRCLOS.begin(), taskIsInCRCLOS.end(),[&taskID](const auto& tuple) {return std::get<0>(tuple) == taskID;});
-			uint64_t CLOSvalue = std::get<1>(*it2);
+			auto it2a = std::find_if(taskIsInCRCLOS.begin(), taskIsInCRCLOS.end(),[&taskID](const auto& tuple) {return std::get<0>(tuple) == taskID;});
+			uint64_t CLOSvalue = std::get<1>(*it2a);
 			LOGINF("{}: CLOS {}"_format(taskID,CLOSvalue));
 			assert((CLOSvalue >= 1) & (CLOSvalue <= 10));
 
