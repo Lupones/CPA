@@ -2441,9 +2441,11 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 			{
 				auto x = std::max_element(LLCoccup_critical.begin(), LLCoccup_critical.end(),[](const std::pair<int, int>& p1, const std::pair<int, int>& p2) {return p1.second < p2.second; });
 				uint32_t maxID = x->first;
+
 				auto it = std::find_if(v_ipc.begin(), v_ipc.end(),[&maxID](const auto& tuple) {return std::get<0>(tuple) == maxID;});
 				double maxIPC = std::get<1>(*it);
-				auto itID = std::find_if(id_pid.begin(), id_pid.end(),[&taskID](const auto& tuple){return std::get<0>(tuple) == taskID;});
+
+				auto itID = std::find_if(id_pid.begin(), id_pid.end(),[&maxID](const auto& tuple){return std::get<0>(tuple) == maxID;});
 				taskPID = std::get<1>(*itID);
 
 				if ((maxIPC >= ipcMedium) & (limit_task[maxID] == false))
