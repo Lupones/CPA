@@ -54,7 +54,7 @@ def main():
             label.set_visible(False)
         ax.set_xlim(-1,31)
 
-        if metric == "ipc":
+        if metric == "geoipc":
             ax.set_ylabel("GeoMean IPC Improvement (%)", fontsize=22)
         elif metric == "interval":
             ax.set_ylabel("TT Improvement (%)", fontsize=22)
