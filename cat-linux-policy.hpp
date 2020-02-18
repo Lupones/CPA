@@ -346,16 +346,12 @@ class CriticalPhaseAware: public LinuxBase
 	void update_configuration(std::vector<pair_t> v, std::vector<pair_t> status, uint64_t num_critical_old, uint64_t num_critical_new);
 	void include_application(uint32_t taskID, pid_t taskPID, std::vector<pair_t>::iterator it, uint64_t CLOSvalue);
 	void isolate_application(uint32_t taskID, pid_t taskPID, std::vector<pair_t>::iterator it);
-	void halve_LLC_space(pid_t taskPID);
-	void increase_noncritical_llc_space(uint32_t new_ways_ncr);
+	void divide_1_critical(uint64_t clos);
 	void divide_2_critical(uint64_t clos);
 	void divide_3_critical(uint64_t clos, bool limitDone);
 	virtual void apply(uint64_t current_interval, const tasklist_t &tasklist);
 	uint64_t get_mask_critical(uint64_t num_ways);
 	uint64_t get_mask_noncritical(uint64_t num_ways);
-	uint32_t get_ways_critical();
-    uint32_t get_ways_noncritical();
-
 
 };
 typedef CriticalPhaseAware CPA;
