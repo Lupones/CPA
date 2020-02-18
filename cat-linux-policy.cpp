@@ -1830,17 +1830,17 @@ uint32_t CriticalPhaseAware::get_ways_critical()
 
         uint32_t clos = LinuxBase::get_cat()->get_clos_of_task(taskPID);
         uint32_t ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(clos));
-        //LOGINF("-> CLOS {} has {} ways"_format(clos,ways));
+        LOGINF("-> CLOS {} has {} ways"_format(clos,ways));
         if (ways > res)
             res = ways;
     }
-    //LOGINF("---> Critical app(s) have {} ways"_format(res));
+    LOGINF("---> Critical app(s) have {} ways"_format(res));
     return res;
 }
 
 uint32_t CriticalPhaseAware::get_ways_noncritical() {
     uint32_t ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
-	//LOGINF("---> Non-critical app(s) have {} ways"_format(ways));
+    LOGINF("---> Non-critical app(s) have {} ways"_format(ways));
     return ways;
 }
 
@@ -1940,11 +1940,10 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 			ipc_sumXij[taskID] += ipc;
 			ipc_phase_duration[taskID] += 1;
 
-			if ((CLOSvalue >= 2) & (CLOSvalue <= 4))
+			if ((CLOSvalue >= 2) & (CLOSvalue <= 4)) {
+				LOGINF("Task {} added to LLCoccup_critical"_format(taskID));
 				LLCoccup_critical[taskID] = l3_occup_mb;
-
-			if ((CLOSvalue == 1) && (!excluded[taskID]))
-				LLCoccup_noncritical[taskID] = l3_occup_mb;
+			}
 
 			if ((CLOSvalue == 5) | (CLOSvalue == 6))
 				LOGINF("[ISO] Isolated task {} ({}) is in CLOS {} and has IPC {}"_format(taskID,taskName,CLOSvalue,ipc));
@@ -2114,9 +2113,9 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
         taskPID = std::get<1>(*it1);
 
 		// Calculate limit space to consider a task Greedy
-		/*double limit_space = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1)) / 3;
+		double limit_space = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1)) / 3;
 		if (limit_space > 3)
-			limit_space = 3;*/
+			limit_space = 3;
 
 		switch (CLOSvalue)
 		{
@@ -2126,7 +2125,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					excluded[taskID] = true;
 					outlier.push_back(std::make_pair(taskID,0));
 					LOGINF("Task {} is a bully--> exclude and CLOS 1"_format(taskID));
-					LLCoccup_noncritical.erase(taskID);
 				}
 				else if ((MPKIL3Task >= limit_outlier) & (HPKIL3Task < hpkil3Limit)) // 2. SQUANDERER
 				{
@@ -2137,7 +2135,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						 LOGINF("There are no isolated CLOSes available --> remain in CLOS 1");
 					outlier.push_back(std::make_pair(taskID,0));
 					excluded[taskID] = true;
-					LLCoccup_noncritical.erase(taskID);
 				}
 				else
 				{
@@ -2147,9 +2144,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						outlier.push_back(std::make_pair(taskID,1));
 						critical_apps++;
 						change_in_outliers = true;
-						LLCoccup_critical[taskID] = l3_occup_mb;
 					}
-					/*else if ((l3_occup_mb > limit_space) & (HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)) // 4. GREEDY
+					else if ((l3_occup_mb > limit_space) & (HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)) // 4. GREEDY
 					{
 						LOGINF("[TEST] {}: has l3_occup_mb {} -> isolate!"_format(taskID,l3_occup_mb));
 						if(n_isolated_apps < 2)
@@ -2157,7 +2153,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						else
 							 LOGINF("There are no isolated CLOSes available --> remain in CLOS 1");
 						outlier.push_back(std::make_pair(taskID,0));
-					}*/
+					}
 					else // 5. NON-CRITICAL
 					{
 						LOGINF("Task {} is still non-critical!"_format(taskID));
@@ -2175,7 +2171,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 				break;
 
 			case 2: case 3: case 4: // Critical
-				if ((HPKIL3Task > MPKIL3Task) & (MPKIL3Task < limit_outlier) & (HPKIL3Task >= hpkil3Limit)) // 1. PROFITABLE CRITICAL
+				if ((HPKIL3Task > MPKIL3Task) & (MPKIL3Task < limit_outlier)) // 1. PROFITABLE CRITICAL
 				{
 					LOGINF("Critical task {} is profitable so continue critical"_format(taskID));
 					outlier.push_back(std::make_pair(taskID,1));
@@ -2214,7 +2210,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					outlier.push_back(std::make_pair(taskID,0));
 					change_in_outliers = true;
 					LLCoccup_critical.erase(taskID);
-					LLCoccup_noncritical[taskID] = l3_occup_mb;
                     CLOS_critical.insert(CLOSvalue);
 					critical_apps--;
 				}
@@ -2243,7 +2238,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						outlier.push_back(std::make_pair(taskID,1));
 						critical_apps++;
 						change_in_outliers = true;
-						LLCoccup_critical[taskID] = l3_occup_mb;
 					}
 					else if ((HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)) // 4. GREEDY
 					{
@@ -2255,7 +2249,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						LOGINF("Task {} is now non-critical!"_format(taskID));
 						include_application(taskID,taskPID,itT,CLOSvalue);
 						outlier.push_back(std::make_pair(taskID,0));
-						LLCoccup_noncritical[taskID] = l3_occup_mb;
 					}
 
 					// Non-exclude task if it is no longer squanderer or bully
@@ -2520,40 +2513,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					}
 				}
 			}
-
-			// Calculate limit space to consider a task Greedy
-			double limit_space = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1)) / 3;
-			if (limit_space > 3)
-				limit_space = 3;
-
-			// NON_CRITICAL APPS
-            for (const auto &item : LLCoccup_noncritical)
-            {
-                taskID = std::get<0>(item);
-                double llc_item = std::get<1>(item);
-                // Find CLOS
-                auto itT = std::find_if(taskIsInCRCLOS.begin(), taskIsInCRCLOS.end(),[&taskID](const auto& tuple) {return std::get<0>(tuple) == taskID;});
-                // Find HPKIL3
-                auto itH = std::find_if(v_hpkil3.begin(), v_hpkil3.end(),[&taskID](const auto& tuple) {return std::get<0>(tuple) == taskID;});
-                double HPKIL3Task = std::get<1>(*itH);
-                // Find MPKIL3
-                auto itM = std::find_if(v_mpkil3.begin(), v_mpkil3.end(),[&taskID](const auto& tuple) {return std::get<0>(tuple) == taskID;});
-                double MPKIL3Task = std::get<1>(*itM);
-                // Find PID
-                auto itID = std::find_if(id_pid.begin(), id_pid.end(),[&taskID](const auto& tuple){return std::get<0>(tuple) == taskID;});
-                taskPID = std::get<1>(*itID);
-
-                if ((llc_item > limit_space) & (HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)){
-                    LOGINF("[ISO] {} has l3_occup_mb {} -> isolate!"_format(taskID,llc_item));
-                    if(n_isolated_apps < 2)
-                        isolate_application(taskID,taskPID,itT);
-                    else
-                        LOGINF("There are no isolated CLOSes available --> remain in CLOS 1");
-                }
-
-            }
-
-
 			if (idle == true)
 			{
 				LOGINF("IDLE INTERVAL {}"_format(idle_count));
@@ -2725,7 +2684,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 	id_pid.clear();
 	id_phase_change.clear();
 	LLCoccup_critical.clear();
-	LLCoccup_noncritical.clear();
 
 }//apply
 

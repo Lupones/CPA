@@ -286,7 +286,6 @@ class CriticalPhaseAware: public LinuxBase
 	// Critical applications variables
 	uint32_t critical_apps = 0;
 	std::map<uint64_t,double> LLCoccup_critical;
-	std::map<uint64_t,double> LLCoccup_noncritical;
 	std::set<uint32_t> CLOS_critical = {2, 3, 4};
 
 	// Dictionary holding up to windowsize[taskID] last MPKIL3 valid (non-spike) values
