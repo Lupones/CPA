@@ -290,6 +290,7 @@ class CriticalPhaseAware: public LinuxBase
 	// Critical applications variables
 	uint32_t critical_apps = 0;
 	std::map<uint64_t,double> LLCoccup_critical;
+	double LLC_critical = 0;
 	std::set<uint32_t> CLOS_critical = {2, 3, 4};
 
 	// Dictionary holding up to windowsize[taskID] last MPKIL3 valid (non-spike) values
@@ -345,6 +346,10 @@ class CriticalPhaseAware: public LinuxBase
 	void divide_1_critical(uint64_t clos);
 	void divide_2_critical(uint64_t clos);
 	void divide_3_critical(uint64_t clos, bool limitDone);
+	void reduce_LLC_to_half(pid_t taskPID);
+	void update_noncritical_llc_space(uint32_t new_ways_ncr);
+	uint32_t get_ways_critical();
+	uint32_t get_ways_noncritical();
 	virtual void apply(uint64_t current_interval, const tasklist_t &tasklist);
 
 };

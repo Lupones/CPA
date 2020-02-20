@@ -109,7 +109,7 @@ for ((REP=${INI_REP};REP<${MAX_REP};REP++)); do
 			if $TOPLEV; then
 				echo ./manager --config ${CONFIG} -o ${OUT} --fin-out ${FIN_OUT} --total-out ${TOT_OUT} --flog-min inf --clog-min ${CLOG_MIN} --log-file $LOG > auxComm.bash
 				chmod +x auxComm.bash
-				${HOME}/manager/pmu-tools/toplev.py -l1 --single-thread --o data/${ID}_${REP}_toplev.txt ./auxComm.bash
+				${HOME}/manager/pmu-tools/toplev.py -l1 --core C2 --o data/${ID}_${REP}_toplev.txt ./auxComm.bash
 				rm auxComm.bash
 			else
 				./manager --config ${CONFIG} -o ${OUT} --fin-out ${FIN_OUT} --total-out ${TOT_OUT} --flog-min inf --clog-min ${CLOG_MIN} --log-file $LOG
