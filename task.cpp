@@ -33,6 +33,17 @@ using fmt::literals::operator""_format;
 // Init static atribute
 std::atomic<uint32_t> Task::ID(0);
 
+uint32_t task_increase_ipc_count(Task &task)
+{
+	return task.ipc_phase_count++;
+}
+
+uint32_t task_increase_clos_change_count(Task &task)
+{
+	LOGINF("------> {} + 1"_format(task.clos_change_count));
+	return task.clos_change_count++;
+}
+
 
 void tasks_set_rundirs(tasklist_t &tasklist, const std::string &rundir_base)
 {
@@ -404,7 +415,9 @@ void task_stats_print_total(const Task &t, uint64_t interval, std::ostream &out,
 			(double) t.stats.sum("instructions") / (double) t.max_instr :
 			NAN;
 	out << completed << sep;
-	out << t.stats.data_to_string_total(sep);
+	out << t.stats.data_to_string_total(sep) << sep;
+	out << t.ipc_phase_count << sep;
+	out << t.clos_change_count;
 	out << std::endl;
 }
 
@@ -415,7 +428,9 @@ void task_stats_print_headers(const Task &t, std::ostream &out, const std::strin
 	out << "app" << sep;
 	out << "CPU" << sep;
 	out << "compl" << sep;
-	out << t.stats.header_to_string(sep);
+	out << t.stats.header_to_string(sep) << sep;
+	out << "phase_changes" << sep;
+	out << "CLOS_changes";
 	out << std::endl;
 }
 

@@ -44,6 +44,8 @@ class Task
 
 	uint32_t num_restarts = 0;  // Number of times it has reached the instruction limit
 	uint32_t completed = 0;     // Number of times it has reached the instruction limit
+	uint32_t ipc_phase_count = 0; // Number of times task has changed phase
+	uint32_t clos_change_count = 0; // Number of times task has changed behavior
 
 	Task() = delete;
 	Task(const std::string &_name, const std::string &_cmd, uint32_t _initial_clos,
@@ -81,6 +83,9 @@ const task_ptr_t& tasks_find(const tasklist_t &tasklist, uint32_t id);
 
 void task_create_rundir(const Task &task);
 void task_remove_rundir(const Task &task);
+
+uint32_t task_increase_ipc_count(Task &task);
+uint32_t task_increase_clos_change_count(Task &task);
 
 void task_execute(Task &task);
 void task_pause(const Task &task);

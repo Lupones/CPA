@@ -1871,8 +1871,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 			LOGINF("{}: ipc_icov = {} ({})"_format(taskID,ipc_ICOV,ipc));
 			if (ipc_ICOV >= icov)
 			{
-				LOGINF("{} IPC PHASE CHANGE {}"_format(taskID,ipc_phase_count[taskID]));
-				ipc_phase_count[taskID] += 1;
+				uint32_t count = task_increase_ipc_count(*task_ptr);
+				LOGINF("{} IPC PHASE CHANGE {}"_format(taskID,count));
 				ipc_phase_duration[taskID] = 1;
 				ipc_sumXij[taskID] = ipc;
 				id_phase_change.push_back(taskID);
@@ -1957,7 +1957,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 				id_phase_change.push_back(taskID);
 
 			// Add to valid_mpkil3 queue
-            deque_mpkil3.push_front(MPKIL3);
+            if (excluded[taskID] == false)
+				deque_mpkil3.push_front(MPKIL3);
 
 			// Store queue modified in the dictionary
 			valid_mpkil3[taskID] = deque_mpkil3;
@@ -1969,7 +1970,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 			LOGINF("NEW ENTRY IN DICT valid_mpkil3 added");
 			valid_mpkil3[taskID].push_front(MPKIL3);
 			taskIsInCRCLOS.push_back(std::make_pair(taskID,1));
-			ipc_phase_count[taskID] = 1;
             ipc_phase_duration[taskID] = 1;
             ipc_sumXij[taskID] = ipc;
 			excluded[taskID]= false;
@@ -2054,6 +2054,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 		if (limit_space > 3)
 			limit_space = 3;
 
+		uint32_t countCLOS;
+		const auto &taskCLOS = tasks_find(tasklist,taskID);
 		switch (CLOSvalue)
 		{
 			case 1: // Non-critical
@@ -2062,6 +2064,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					excluded[taskID] = true;
 					outlier.push_back(std::make_pair(taskID,0));
 					LOGINF("Task {} is a bully--> exclude and CLOS 1"_format(taskID));
+					countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 				else if ((MPKIL3Task >= limit_outlier) & (HPKIL3Task < hpkil3Limit)) // 2. SQUANDERER
 				{
@@ -2072,6 +2075,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						 LOGINF("There are no isolated CLOSes available --> remain in CLOS 1");
 					outlier.push_back(std::make_pair(taskID,0));
 					excluded[taskID] = true;
+					countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 				else
 				{
@@ -2081,6 +2085,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						outlier.push_back(std::make_pair(taskID,1));
 						critical_apps++;
 						change_in_outliers = true;
+						countCLOS = task_increase_clos_change_count(*taskCLOS);
 					}
 					else if ((l3_occup_mb > limit_space) & (HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)) // 4. GREEDY
 					{
@@ -2090,6 +2095,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						else
 							 LOGINF("There are no isolated CLOSes available --> remain in CLOS 1");
 						outlier.push_back(std::make_pair(taskID,0));
+						countCLOS = task_increase_clos_change_count(*taskCLOS);
 					}
 					else // 5. NON-CRITICAL
 					{
@@ -2116,12 +2122,13 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 				else if((MPKIL3Task >= 10) & (HPKIL3Task >= 10) & (IPCTask <= ipcLow)) // 2. BULLY
 				{
 					excluded[taskID] = true;
-					critical_apps--;
 					change_in_outliers = true;
 					outlier.push_back(std::make_pair(taskID,0));
 					LOGINF("Task {} is a bully--> exclude and CLOS 1"_format(taskID));
 					LLCoccup_critical.erase(taskID);
 					CLOS_critical.insert(CLOSvalue);
+					critical_apps--;
+					countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 				else if ((MPKIL3Task >= limit_outlier) & (HPKIL3Task >= hpkil3Limit)) // 3. STILL CRITICAL
 				{
@@ -2138,6 +2145,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					outlier.push_back(std::make_pair(taskID,0));
 					excluded[taskID] = true;
 					critical_apps--;
+					countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 				else // 5. NON-CRITICAL
 				{
@@ -2147,6 +2155,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					LLCoccup_critical.erase(taskID);
                     CLOS_critical.insert(CLOSvalue);
 					critical_apps--;
+					countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 				break;
 
@@ -2157,6 +2166,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					include_application(taskID,taskPID,itT,CLOSvalue);
 					outlier.push_back(std::make_pair(taskID,0));
 					LOGINF("Task {} is a bully--> exclude and CLOS 1"_format(taskID));
+					countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 				else if ((MPKIL3Task >= limit_outlier) & (HPKIL3Task < hpkil3Limit)) // 3. SQUANDERER
 				{
@@ -2173,6 +2183,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						outlier.push_back(std::make_pair(taskID,1));
 						critical_apps++;
 						change_in_outliers = true;
+						countCLOS = task_increase_clos_change_count(*taskCLOS);
 					}
 					else if ((HPKIL3Task < 0.5) & (MPKIL3Task < 0.5)) // 4. GREEDY
 					{
@@ -2184,6 +2195,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						LOGINF("Task {} is now non-critical!"_format(taskID));
 						include_application(taskID,taskPID,itT,CLOSvalue);
 						outlier.push_back(std::make_pair(taskID,0));
+						countCLOS = task_increase_clos_change_count(*taskCLOS);
 					}
 
 					// Non-exclude task if it is no longer squanderer or bully
@@ -2399,8 +2411,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 				auto it = std::find_if(v_ipc.begin(), v_ipc.end(),[&maxID](const auto& tuple) {return std::get<0>(tuple) == maxID;});
 				double maxIPC = std::get<1>(*it);
 
-				auto itID = std::find_if(id_pid.begin(), id_pid.end(),[&maxID](const auto& tuple){return std::get<0>(tuple) == maxID;});
-				taskPID = std::get<1>(*itID);
+				const auto &taskCLOS = tasks_find(tasklist,maxID);
 
 				if ((maxIPC >= ipcMedium) & (limit_task[maxID] == false))
 				{
@@ -2409,6 +2420,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					uint64_t CLOSvalue = std::get<1>(*it2);
 					divide_1_critical(CLOSvalue);
 					limit_task[maxID] = true;
+					uint32_t countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 
 			}
@@ -2430,6 +2442,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					{
 						auto it2 = std::find_if(taskIsInCRCLOS.begin(), taskIsInCRCLOS.end(),[&maxID](const auto& tuple) {return std::get<0>(tuple) == maxID;});
 						uint64_t CLOSvalue = std::get<1>(*it2);
+						const auto &taskCLOS = tasks_find(tasklist,maxID);
 
 						auto it = std::find_if(v_ipc.begin(), v_ipc.end(),[&taskID](const auto& tuple) {return std::get<0>(tuple) == taskID;});
 						double ipcTask = std::get<1>(*it);
@@ -2451,6 +2464,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 							limit = true;
 							change_critical = true;
 							LOGINF("[AA] Critical apps ways divided!");
+							uint32_t countCLOS = task_increase_clos_change_count(*taskCLOS);
 							break;
 						}
 						else

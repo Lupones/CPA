@@ -284,9 +284,7 @@ class CriticalPhaseAware: public LinuxBase
 	std::vector<uint64_t> isolated_closes = {5, 6};
 	std::map<uint64_t, uint64_t> clos_mask = {
           { 5, 0x00003 },
-          { 6, 0x00003 },
-          { 7, 0x000ff },
-		  { 8, 0x000ff },
+          { 6, 0x0000f },
 	};
 
 	// Critical applications variables
@@ -298,7 +296,7 @@ class CriticalPhaseAware: public LinuxBase
     std::map<uint32_t, std::deque<double>> valid_mpkil3;
 
     // Dictionaries holdind phase info for each task
-	std::map<uint32_t, uint64_t> ipc_phase_count;
+	//std::map<uint32_t, uint64_t> ipc_phase_count;
 	std::map<uint32_t, uint64_t> ipc_phase_duration;
 	// Dictionary holding sum of MPKIL3 of each application during a given phase
 	std::map<uint32_t, double> ipc_sumXij;
