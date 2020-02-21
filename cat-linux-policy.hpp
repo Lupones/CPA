@@ -239,7 +239,7 @@ class CriticalAwareV4: public LinuxBase
 };
 typedef CriticalAwareV4 CAV4;
 
-class CriticalAwareV3: public LinuxBase
+class CriticalPhaseAware: public LinuxBase
 {
     protected:
     uint64_t every = -1;
@@ -335,9 +335,9 @@ class CriticalAwareV3: public LinuxBase
 
     public:
 
-    CriticalAwareV3(uint64_t _every, uint64_t _firstInterval, uint64_t _idleIntervals, double _ipcMedium, double _ipcLow, double _icov, double _hpkil3Limit) : every(_every), firstInterval(_firstInterval), idleIntervals(_idleIntervals), ipcLow(_ipcLow), ipcMedium(_ipcMedium), icov(_icov), hpkil3Limit(_hpkil3Limit) {}
+    CriticalPhaseAware(uint64_t _every, uint64_t _firstInterval, uint64_t _idleIntervals, double _ipcMedium, double _ipcLow, double _icov, double _hpkil3Limit) : every(_every), firstInterval(_firstInterval), idleIntervals(_idleIntervals), ipcLow(_ipcLow), ipcMedium(_ipcMedium), icov(_icov), hpkil3Limit(_hpkil3Limit) {}
 
-    virtual ~CriticalAwareV3() = default;
+    virtual ~CriticalPhaseAware() = default;
 
     //configure CAT
 	void update_configuration(std::vector<pair_t> v, std::vector<pair_t> status, uint64_t num_critical_old, uint64_t num_critical_new);
@@ -353,7 +353,7 @@ class CriticalAwareV3: public LinuxBase
 	virtual void apply(uint64_t current_interval, const tasklist_t &tasklist);
 
 };
-typedef CriticalAwareV3 CAV3;
+typedef CriticalPhaseAware CPA;
 
 
 
