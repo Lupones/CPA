@@ -102,9 +102,9 @@ std::shared_ptr<cat::policy::Base> config_read_cat_policy(const YAML::Node &conf
 
 		return std::make_shared<cat::policy::CriticalAwareV4>(every, firstInterval, IDLE_INTERVALS, ipc_threshold, ipc_ICOV_threshold);
 	}
- 	else if (kind == "cav3")
+ 	else if (kind == "cpa")
 	{
-		LOGINF("Using Critical-Aware (cav3) CAT policy");
+		LOGINF("Using Critical Phase-Aware (CPA) CAT policy");
 
 		// Check that required fields exist
 		for (string field : {"every", "firstInterval", "idleIntervals", "ipcLow", "ipcMedium", "icov", "hpkil3Limit"})
@@ -121,7 +121,7 @@ std::shared_ptr<cat::policy::Base> config_read_cat_policy(const YAML::Node &conf
 		double icov = policy["icov"].as<double>();
 		double hpkil3Limit = policy["hpkil3Limit"].as<double>();
 
-		return std::make_shared<cat::policy::CriticalAwareV3>(every, firstInterval, idleIntervals, ipcMedium, ipcLow, icov, hpkil3Limit);
+		return std::make_shared<cat::policy::CriticalPhaseAware>(every, firstInterval, idleIntervals, ipcMedium, ipcLow, icov, hpkil3Limit);
 	}
 	else if (kind == "cav2")
     {
