@@ -40,7 +40,6 @@ uint32_t task_increase_ipc_count(Task &task)
 
 uint32_t task_increase_clos_change_count(Task &task)
 {
-	LOGINF("------> {} + 1"_format(task.clos_change_count));
 	return task.clos_change_count++;
 }
 
