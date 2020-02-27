@@ -348,8 +348,6 @@ class CriticalPhaseAware: public LinuxBase
 	void divide_3_critical(uint64_t clos, bool limitDone);
 	void reduce_LLC_to_half(pid_t taskPID);
 	void update_noncritical_llc_space(uint32_t new_ways_ncr);
-	uint32_t get_ways_critical();
-	uint32_t get_ways_noncritical();
 	virtual void apply(uint64_t current_interval, const tasklist_t &tasklist);
 
 };

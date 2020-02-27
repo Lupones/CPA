@@ -1736,9 +1736,9 @@ void CriticalPhaseAware::divide_3_critical(uint64_t clos, bool limitDone)
 		maskCLOS4 = LinuxBase::get_cat()->get_cbm(4);
 	}
 
-	LOGINF("CLOS 2 now has mask {:#x} ({} ways)"_format(maskCLOS2, num_ways_CLOS_2));
-	LOGINF("CLOS 3 now has mask {:#x} ({} ways)"_format(maskCLOS3, num_ways_CLOS_3));
-	LOGINF("CLOS 4 now has mask {:#x} ({} ways)"_format(maskCLOS4, num_ways_CLOS_4));
+	LOGINF("[LLC] CLOS 2 now has mask {:#x} ({} ways)"_format(maskCLOS2, num_ways_CLOS_2));
+	LOGINF("[LLC] CLOS 3 now has mask {:#x} ({} ways)"_format(maskCLOS3, num_ways_CLOS_3));
+	LOGINF("[LLC] CLOS 4 now has mask {:#x} ({} ways)"_format(maskCLOS4, num_ways_CLOS_4));
 
 	limit = true;
 }
@@ -1801,9 +1801,9 @@ void CriticalPhaseAware::divide_2_critical(uint64_t clos)
 		maskCLOS4 = LinuxBase::get_cat()->get_cbm(4);
 	}
 
-	LOGINF("CLOS 2 now has mask {:#x} ({} ways)"_format(maskCLOS2, num_ways_CLOS_2));
-	LOGINF("CLOS 3 now has mask {:#x} ({} ways)"_format(maskCLOS3, num_ways_CLOS_3));
-	LOGINF("CLOS 4 now has mask {:#x} ({} ways)"_format(maskCLOS4, num_ways_CLOS_4));
+	LOGINF("[LLC] CLOS 2 now has mask {:#x} ({} ways)"_format(maskCLOS2, num_ways_CLOS_2));
+	LOGINF("[LLC] CLOS 3 now has mask {:#x} ({} ways)"_format(maskCLOS3, num_ways_CLOS_3));
+	LOGINF("[LLC] CLOS 4 now has mask {:#x} ({} ways)"_format(maskCLOS4, num_ways_CLOS_4));
 }
 
 void CriticalPhaseAware::divide_1_critical(uint64_t clos)
@@ -1889,10 +1889,10 @@ void CriticalPhaseAware::divide_1_critical(uint64_t clos)
 	num_ways_CLOS_1 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
 	maskNonCrCLOS = LinuxBase::get_cat()->get_cbm(1);
 
-	LOGINF("CLOS 1 now has mask {:#x} ({} ways)"_format(maskNonCrCLOS, num_ways_CLOS_1));
-	LOGINF("CLOS 2 now has mask {:#x} ({} ways)"_format(maskCLOS2, num_ways_CLOS_2));
-	LOGINF("CLOS 3 now has mask {:#x} ({} ways)"_format(maskCLOS3, num_ways_CLOS_3));
-	LOGINF("CLOS 4 now has mask {:#x} ({} ways)"_format(maskCLOS4, num_ways_CLOS_4));
+	LOGINF("[LLC] CLOS 1 now has mask {:#x} ({} ways)"_format(maskNonCrCLOS, num_ways_CLOS_1));
+	LOGINF("[LLC] CLOS 2 now has mask {:#x} ({} ways)"_format(maskCLOS2, num_ways_CLOS_2));
+	LOGINF("[LLC] CLOS 3 now has mask {:#x} ({} ways)"_format(maskCLOS3, num_ways_CLOS_3));
+	LOGINF("[LLC] CLOS 4 now has mask {:#x} ({} ways)"_format(maskCLOS4, num_ways_CLOS_4));
 }
 
 void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &tasklist)
@@ -2410,11 +2410,11 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 		//}
 	}
 
-	auto xLLC = std::max_element(LLCoccup_critical.begin(), LLCoccup_critical.end(),
-								 [](const std::pair<int, int> &p1, const std::pair<int, int> &p2) {
-									 return p1.second < p2.second;
-								 });
-	LLC_critical = xLLC->second;
+	for (const auto &myPair : LLCoccup_critical) {
+				LLC_critical+= myPair.second;
+	}
+	LOGINF("Total LLCoccup_critical = {}"_format(LLC_critical));
+
 
 	// check CLOS are configured to the correct mask
 	if (firstTime)
@@ -2613,42 +2613,32 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 
 				if ((maxIPC >= ipcMedium) & (limit_task[maxID] == false))
 				{
-					LOGINF("Critical app {} has medium behavior -> reduce"_format(maxID));
+					LOGINF("[LLC] Critical app {} has medium behavior -> reduce"_format(maxID));
 					auto it2 = std::find_if(
 							taskIsInCRCLOS.begin(), taskIsInCRCLOS.end(),
 							[&maxID](const auto &tuple) { return std::get<0>(tuple) == maxID; });
 					uint64_t CLOSvalue = std::get<1>(*it2);
 					divide_1_critical(CLOSvalue);
 					limit_task[maxID] = true;
+					limit = true;
 					uint32_t countCLOS = task_increase_clos_change_count(*taskCLOS);
 				}
 			}
 			else if ((critical_apps == 2) | (critical_apps == 3))
 			{
-				// Check occupancy of critical apps
-				auto x = std::max_element(
-						LLCoccup_critical.begin(), LLCoccup_critical.end(),
-						[](const std::pair<int, int> &p1, const std::pair<int, int> &p2) {
-							return p1.second < p2.second;
-						});
-				uint32_t maxID = x->first;
-				double maxOcc = x->second;
-				LOGINF("[AA] Max_occup = {} from task {}"_format(maxOcc, maxID));
-
 				for (const auto &myPair : LLCoccup_critical)
 				{
 					double occup = myPair.second;
 					taskID = myPair.first;
-					LOGINF("[AA] {}: occup {}"_format(myPair.first, occup));
+					LOGINF("[LLC] {}: occup {}"_format(myPair.first, occup));
 
-					if ((maxOcc >= 2 * occup) & (maxID != myPair.first))
-					{
+					if ((LLC_critical/2) <= occup) {
 						auto it2 = std::find_if(taskIsInCRCLOS.begin(), taskIsInCRCLOS.end(),
-												[&maxID](const auto &tuple) {
-													return std::get<0>(tuple) == maxID;
+												[&taskID](const auto &tuple) {
+													return std::get<0>(tuple) == taskID;
 												});
 						uint64_t CLOSvalue = std::get<1>(*it2);
-						const auto &taskCLOS = tasks_find(tasklist, maxID);
+						const auto &taskCLOS = tasks_find(tasklist, taskID);
 
 						auto it = std::find_if(v_ipc.begin(), v_ipc.end(),
 											   [&taskID](const auto &tuple) {
@@ -2656,34 +2646,26 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 											   });
 						double ipcTask = std::get<1>(*it);
 
-						it = std::find_if(v_ipc.begin(), v_ipc.end(), [&maxID](const auto &tuple) {
-							return std::get<0>(tuple) == maxID;
-						});
-						double maxIPC = std::get<1>(*it);
-
-						if ((ipcTask < ipcMedium) & (maxIPC > ipcMedium))
+						if (ipcTask >= ipcMedium)
 						{
-							LOGINF("[AA] Limit space to CLOS {}"_format(CLOSvalue));
+							LOGINF("[LLC] Limit space to CLOS {}"_format(CLOSvalue));
 							if ((critical_apps == 2) & (limit == false))
 								divide_2_critical(CLOSvalue);
-							else if ((critical_apps == 3) & (limit == true) &
-									 (limit_task[maxID] == false))
+							else if ((critical_apps == 3) & (limit == true) & (limit_task[taskID] == false))
 								divide_2_critical(CLOSvalue); // 2/3
-							else if ((critical_apps == 3) & (limit == false) &
-									 (limit_task[maxID] == false))
+							else if ((critical_apps == 3) & (limit == false) & (limit_task[taskID] == false))
 								divide_3_critical(CLOSvalue, false); // 1/3
 
-							limit_task[maxID] = true;
+							limit_task[taskID] = true;
 							limit = true;
 							change_critical = true;
-							LOGINF("[AA] Critical apps ways divided!");
+							LOGINF("[LLC] Critical apps ways divided!");
 							uint32_t countCLOS = task_increase_clos_change_count(*taskCLOS);
 							break;
 						}
 						else
 						{
-							LOGINF("[AA] IPCtask ({}) {} and maxIPC ({}) {} do not fullfil criteria to limit!"_format(
-									taskID, ipcTask, maxID, maxIPC));
+							LOGINF("[LLC] {}: IPCtask ({}) does not fullfil criteria to limit!"_format(taskID, ipcTask));
 						}
 					}
 				}
