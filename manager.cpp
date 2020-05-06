@@ -199,6 +199,7 @@ void loop(
 		for (const auto &task_ptr : schedlist)
 		{
 			// Deal with apps that finish or reach the limit
+			// COMMENT IN CASE OF USING KPART'S METHODOLOGY
 			task_restart_or_set_done(*task_ptr, catpol->get_cat(), perf, events); // Status can change from (exited | limit_reached) -> done
 
 			// If it's done print total stats
