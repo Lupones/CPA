@@ -2173,7 +2173,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						change_in_outliers = true;
 						//countCLOS = task_increase_clos_change_count(*taskCLOS);
 					}
-					else if ((!excluded[taskID]) && (l3_occup_mb > limit_space) && (HPKIL3Task < 0.5) && (MPKIL3Task < 0.5)) {
+					else if ((l3_occup_mb > limit_space) && (HPKIL3Task < 0.5) && (MPKIL3Task < 0.5)) {
 						// 4. NON-CRITICAL GREEDY
 						LOGINF("[NCR GREEDY] {}: has l3_occup_mb {} -> isolate!"_format(taskID,
 																				  l3_occup_mb));
