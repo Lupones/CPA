@@ -1836,7 +1836,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 	bool change_in_outliers = false;
 
 	// Gather data
-	LOGINF("—————– STEP 1 —————–");
+	LOGINF("—————– STEPS 1 & 2 —————–");
 	for (const auto &task_ptr : tasklist) {
 		const Task &task = *task_ptr;
 		std::string taskName = task.name;
@@ -1889,18 +1889,19 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						taskID, taskName, CLOSvalue, ipc));
 
 			// Calculate IPC ICOV for each task
-			LOGINF("—————– STEP 2 —————–");
 			my_sum = ipc_sumXij[taskID] / ipc_phase_duration[taskID];
 			prev_sum = (ipc_sumXij[taskID] - ipc) / (ipc_phase_duration[taskID] - 1);
 			ipc_ICOV = fabs(ipc - prev_sum) / my_sum;
 			LOGINF("{}: ipc_icov = {} ({})"_format(taskID, ipc_ICOV, ipc));
+			// Application phase-change checking
 			if (ipc_ICOV >= icov) {
 				uint32_t count = task_increase_ipc_count(*task_ptr);
-				LOGINF("{} IPC PHASE CHANGE {}"_format(taskID, count));
+				LOGINF("{}: IPC PHASE CHANGE {}"_format(taskID, count));
 				ipc_phase_duration[taskID] = 1;
 				ipc_sumXij[taskID] = ipc;
 				id_phase_change.push_back(taskID);
 
+				// Check if medium app is no longer medium
 				if ((limit_task[taskID] == true) && (ipc < ipcMedium) && (CLOSvalue >= 2) &&
 					(CLOSvalue <= 4)) {
 					LOGINF("[LLC] Limiting task {} was not good! -> return its ways"_format(taskID));
