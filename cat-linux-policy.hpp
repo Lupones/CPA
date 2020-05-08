@@ -282,9 +282,6 @@ class CriticalPhaseAware: public LinuxBase
 	uint64_t n_isolated_apps = 0;
 	std::vector<uint64_t> isolated_closes = {5, 6};
 
-	uint64_t prev_critical_apps = 0;
-    int64_t num_shared_ways = 0;
-
 	// Window size of MPKIL3 valies
 	uint64_t windowSize = 10;
 
@@ -308,6 +305,7 @@ class CriticalPhaseAware: public LinuxBase
 	std::map<uint64_t,double> LLCoccup_critical;
 	double LLC_critical = 0;
 	std::set<uint32_t> CLOS_critical = {2, 3, 4};
+	uint64_t prev_critical_apps = 0;
 
 	// Dictionary holding up to windowsize[taskID] last MPKIL3 valid (non-spike) values
     std::map<uint32_t, std::deque<double>> valid_mpkil3;

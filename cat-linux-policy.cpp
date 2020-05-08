@@ -1542,7 +1542,6 @@ void CriticalPhaseAware::update_configuration(std::vector<pair_t> v, std::vector
 	LinuxBase::get_cat()->set_cbm(2, maskCR);
 	LinuxBase::get_cat()->set_cbm(3, maskCR);
 	LinuxBase::get_cat()->set_cbm(4, maskCR);
-	num_shared_ways = 2;
 	uint64_t ways = __builtin_popcount(maskNCR);
 	LOGINF("[UPDATE] CLOS 1 (non-CR) has mask {:#x} ({} ways)"_format(LinuxBase::get_cat()->get_cbm(1), ways));
 	ways = __builtin_popcount(maskCR);
@@ -2603,7 +2602,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 								uint64_t maxways = std::max(num_ways_CLOS_2, num_ways_CLOS_3);
 				maxways = std::max(maxways, num_ways_CLOS_4);
 				int64_t aux_ns = (num_ways_CLOS_2 + num_ways_CLOS_1) - 20;
-				num_shared_ways = (aux_ns < 0) ? 0 : aux_ns;
+				int64_t num_shared_ways = (aux_ns < 0) ? 0 : aux_ns;
 				LOGINF("Number of shared ways: {}"_format(num_shared_ways));
 				assert(num_shared_ways >= 0);
 
