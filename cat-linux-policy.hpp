@@ -250,15 +250,38 @@ class CriticalPhaseAware: public LinuxBase
 	double icov = 1;
 	double hpkil3Limit = 0;
 
-    // Masks and number of ways of CLOS
-	uint64_t maskCLOS2 = 0xfffff;
-	uint64_t maskCLOS3 = 0xfffff;
-	uint64_t maskCLOS4 = 0xfffff;
-    uint64_t num_ways_CLOS_2 = 20;
-	uint64_t num_ways_CLOS_3 = 20;
-	uint64_t num_ways_CLOS_4 = 20;
-    uint64_t maskNonCrCLOS = 0xfffff;
-    uint64_t num_ways_CLOS_1 = 20;
+    /* Masks and number of ways of CLOS */
+	// FULL CACHE
+	uint64_t mask_MAX = 0xfffff;
+	uint64_t ways_MAX = 20;
+	uint64_t mask_min_right = 0x00001;
+	uint64_t mask_min_left = 0x80000;
+
+	// 1 CRITICAL APPLICATION
+	// 60% ways critical, 50% ways non-critical
+	uint64_t mask_CRCLOS_1 = 0xfff00;
+	uint64_t mask_NCRCLOS_1 = 0x003ff;
+
+	// 2 CRITICAL APPLICATIONS
+	// 65% ways critical, 45% ways non-critical
+	uint64_t mask_CRCLOS_2 = 0xfff80;
+	uint64_t mask_NCRCLOS_2 = 0x001ff;
+
+	// 3 CRITICAL APPLICATIONS
+	// 70% ways critical, 40% ways non-critical
+	uint64_t mask_CRCLOS_3 = 0xfffc0;
+	uint64_t mask_NCRCLOS_3 = 0x000ff;
+
+	// SQUANDERER and NON-CRITICAL GREEDY APPLICATIONS
+	// CLOSes 5 and 6
+	// 10% ways to each one,
+	// overlapping with non-critical ways
+	uint64_t mask_iso_1 = 0x00003;
+	uint64_t mask_iso_2 = 0x0000f;
+	std::vector<uint32_t> id_isolated;
+	uint64_t n_isolated_apps = 0;
+	std::vector<uint64_t> isolated_closes = {5, 6};
+
 	uint64_t prev_critical_apps = 0;
     int64_t num_shared_ways = 0;
 
@@ -279,13 +302,6 @@ class CriticalPhaseAware: public LinuxBase
 	double stdmpkiL3Mean = 0;
 
 	// Isolation mechanism variables
-    std::vector<uint32_t> id_isolated;
-	uint64_t n_isolated_apps = 0;
-	std::vector<uint64_t> isolated_closes = {5, 6};
-	std::map<uint64_t, uint64_t> clos_mask = {
-          { 5, 0x00003 },
-          { 6, 0x0000f },
-	};
 
 	// Critical applications variables
 	uint32_t critical_apps = 0;
