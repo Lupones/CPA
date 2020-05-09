@@ -1742,59 +1742,31 @@ void CriticalPhaseAware::divide_2_critical(uint64_t clos)
 
 void CriticalPhaseAware::divide_1_critical(uint64_t clos)
 {
-	uint64_t maxWays = __builtin_popcount(LinuxBase::get_cat()->get_cbm(clos));
-
-	switch (maxWays) {
-		case 20:
-			LinuxBase::get_cat()->set_cbm(clos, 0xffc00);
-			LinuxBase::get_cat()->set_cbm(1, 0x00fff);
-			break;
-		case 19:
-		case 18:
-			LinuxBase::get_cat()->set_cbm(clos, 0xff800);
-			LinuxBase::get_cat()->set_cbm(1, 0x01fff);
-			break;
-		case 17:
-		case 16:
-			LinuxBase::get_cat()->set_cbm(clos, 0xff000);
-			LinuxBase::get_cat()->set_cbm(1, 0x03fff);
-			break;
-		case 15:
-		case 14:
-			LinuxBase::get_cat()->set_cbm(clos, 0xfe000);
-			LinuxBase::get_cat()->set_cbm(1, 0x07fff);
-			break;
-		case 13:
-		case 12:
-			LinuxBase::get_cat()->set_cbm(clos, 0xfc000);
-			LinuxBase::get_cat()->set_cbm(1, 0x0ffff);
-			break;
-		case 11:
-		case 10:
-			LinuxBase::get_cat()->set_cbm(clos, 0xf8000);
-			LinuxBase::get_cat()->set_cbm(1, 0x1ffff);
-			break;
-		case 9:
-		case 8:
-			LinuxBase::get_cat()->set_cbm(clos, 0xf0000);
-			LinuxBase::get_cat()->set_cbm(1, 0x3ffff);
-			break;
-		case 7:
-		case 6:
-			LinuxBase::get_cat()->set_cbm(clos, 0xe0000);
-			LinuxBase::get_cat()->set_cbm(1, 0x7ffff);
-			break;
-		default:
-			break;
+	// 1. Reduce half the number of ways of clos
+	uint64_t schem = LinuxBase::get_cat()->get_cbm(clos);
+	uint32_t ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(clos));
+	if (ways <= 2) {
+		LOGINF("[LLC] Already reached minimum ways!");
+	} else {
+		uint32_t half_ways = ways/2;
+		LOGINF("[LLC] CLOS {} reduced from {} to {} ways"_format(clos,ways,half_ways));
+		uint32_t reduced_ways = ways - half_ways;
+		for(uint32_t i=0; i<reduced_ways; i++)
+			schem = (schem << 1) & mask_MAX;
+		LOGINF("[LLC] CLOS {} new mask: {:#x}"_format(clos, schem));
+		LinuxBase::get_cat()->set_cbm(clos,schem);
 	}
 
-	uint64_t num_ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
-	uint64_t mask = LinuxBase::get_cat()->get_cbm(1);
-	LOGINF("[LLC] CLOS 1 now has mask {:#x} ({} ways)"_format(mask, num_ways));
-	num_ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(clos));
-	LLC_ways_space = num_ways;
-    mask = LinuxBase::get_cat()->get_cbm(clos);
-	LOGINF("[LLC] CLOS {} now has mask {:#x} ({} ways)"_format(clos, mask, num_ways));
+	// 2. Increase CLOS 1 space
+	ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
+	uint32_t ways_critical = __builtin_popcount(schem);
+	LLC_ways_space = ways_critical;
+	uint32_t diff = ((ways_MAX + 2) - ways_critical) - ways;
+	schem = LinuxBase::get_cat()->get_cbm(1);
+    for(uint32_t i=0; i<diff; i++)
+        schem = (schem << 1) | mask_min_right;
+    LOGINF("[LLC] CLOS 1 new mask: {:#x}"_format(schem));
+    LinuxBase::get_cat()->set_cbm(1,schem);
 }
 
 void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &tasklist) {
@@ -1917,6 +1889,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 						LOGINF("CLOS 1 now has mask {:#x} ({} ways)"_format(mask_NCRCLOS_1, ways));
 						LinuxBase::get_cat()->set_cbm(CLOSvalue, mask_CRCLOS_1);
 						ways = __builtin_popcount(mask_CRCLOS_1);
+						LLC_ways_space = ways;
 						LOGINF("CLOS {} now has mask {:#x} ({} ways)"_format(CLOSvalue, mask_CRCLOS_1, ways));
 					}
 					else if (critical_apps == 2) {
@@ -2525,6 +2498,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 							LinuxBase::get_cat()->set_cbm(2, maskCLOS2);
 							LinuxBase::get_cat()->set_cbm(3, maskCLOS3);
 							LinuxBase::get_cat()->set_cbm(4, maskCLOS4);
+							LLC_ways_space = LLC_ways_space - 1;
 							break;
 
 						case 7:
@@ -2552,6 +2526,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 								LinuxBase::get_cat()->set_cbm(2, maskCLOS2);
 								LinuxBase::get_cat()->set_cbm(3, maskCLOS3);
 								LinuxBase::get_cat()->set_cbm(4, maskCLOS4);
+								LLC_ways_space = LLC_ways_space + 1;
 							}
 							else
 								LOGINF("Critical app(s). have reached limit space.");
@@ -2577,7 +2552,6 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 
 				uint64_t maxways = std::max(num_ways_CLOS_2, num_ways_CLOS_3);
 				maxways = std::max(maxways, num_ways_CLOS_4);
-				LLC_ways_space = maxways;
 				int64_t aux_ns = (num_ways_CLOS_2 + num_ways_CLOS_1) - 20;
 				int64_t num_shared_ways = (aux_ns < 0) ? 0 : aux_ns;
 				LOGINF("Number of shared ways: {}"_format(num_shared_ways));
