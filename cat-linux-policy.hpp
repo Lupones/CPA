@@ -358,11 +358,8 @@ class CriticalPhaseAware: public LinuxBase
 	void update_configuration(std::vector<pair_t> v, std::vector<pair_t> status, uint64_t num_critical_old, uint64_t num_critical_new);
 	void include_application(uint32_t taskID, pid_t taskPID, std::vector<pair_t>::iterator it, uint64_t CLOSvalue);
 	void isolate_application(uint32_t taskID, pid_t taskPID, std::vector<pair_t>::iterator it);
-	void divide_1_critical(uint64_t clos);
-	void divide_2_critical(uint64_t clos);
+	void divide_half_ways_critical(uint64_t clos, uint32_t cr_apps);
 	void divide_3_critical(uint64_t clos, bool limitDone);
-	void reduce_LLC_to_half(pid_t taskPID);
-	void update_noncritical_llc_space(uint32_t new_ways_ncr);
 	virtual void apply(uint64_t current_interval, const tasklist_t &tasklist);
 
 };
