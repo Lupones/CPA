@@ -304,6 +304,7 @@ class CriticalPhaseAware: public LinuxBase
 	uint32_t critical_apps = 0;
 	std::map<uint64_t,double> LLCoccup_critical;
 	double LLC_critical = 0;
+	double LLC_ways_space = 0;
 	std::set<uint32_t> CLOS_critical = {2, 3, 4};
 	uint64_t prev_critical_apps = 0;
 
