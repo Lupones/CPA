@@ -1420,7 +1420,7 @@ void CriticalPhaseAware::update_configuration(std::vector<pair_t> v, std::vector
 	idle_count = idleIntervals;
 	limit_task.clear();
 
-	LOGINF("[UPDATE] From {} ways to {} ways"_format(num_critical_old, num_critical_new));
+	LOGINF("[UPDATE] From {} to {} critical apps"_format(num_critical_old, num_critical_new));
 
 	// If 4 or 0 new critical apps are detected...
 	// >> assign CLOSes mask 0xfffff
@@ -1605,85 +1605,31 @@ void CriticalPhaseAware::include_application(uint32_t taskID, pid_t taskPID,
 
 void CriticalPhaseAware::divide_3_critical(uint64_t clos, bool limitDone)
 {
-	uint64_t num_ways_CLOS_2 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(2));
-	uint64_t num_ways_CLOS_3 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(3));
-	uint64_t num_ways_CLOS_4 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(4));
-	uint64_t maxWays = std::max(num_ways_CLOS_2, num_ways_CLOS_3);
-	maxWays = std::max(maxWays, num_ways_CLOS_4);
+	uint64_t schem = LinuxBase::get_cat()->get_cbm(clos);
+	uint32_t ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(clos));
+	uint32_t half_ways = 0;
+	LOGINF("[LLC] Limit {}!"_format(limitDone));
 
 	if (!limitDone) {
-		switch (maxWays) {
-			case 20:
-			case 19:
-				LinuxBase::get_cat()->set_cbm(clos, 0xfe000);
-				break;
-			case 18:
-			case 17:
-			case 16:
-				LinuxBase::get_cat()->set_cbm(clos, 0xfc000);
-				break;
-			case 15:
-			case 14:
-			case 13:
-				LinuxBase::get_cat()->set_cbm(clos, 0xf8000);
-				break;
-			case 12:
-			case 11:
-			case 10:
-				LinuxBase::get_cat()->set_cbm(clos, 0xf0000);
-				break;
-			case 9:
-			case 8:
-			case 7:
-				LinuxBase::get_cat()->set_cbm(clos, 0xe0000);
-				break;
-			case 6:
-			case 5:
-			case 4:
-				LinuxBase::get_cat()->set_cbm(clos, 0xc0000);
-				break;
-			default:
-				break;
-		}
-	}
-	else {
-		switch (maxWays) {
-			case 20:
-			case 19:
-				LinuxBase::get_cat()->set_cbm(clos, 0xfffc0);
-				break;
-			case 18:
-			case 17:
-			case 16:
-				LinuxBase::get_cat()->set_cbm(clos, 0xfff00);
-				break;
-			case 15:
-			case 14:
-			case 13:
-				LinuxBase::get_cat()->set_cbm(clos, 0xffc00);
-				break;
-			case 12:
-			case 11:
-			case 10:
-				LinuxBase::get_cat()->set_cbm(clos, 0xff000);
-				break;
-			case 9:
-			case 8:
-			case 7:
-				LinuxBase::get_cat()->set_cbm(clos, 0xfc000);
-				break;
-			case 6:
-				LinuxBase::get_cat()->set_cbm(clos, 0xf0000);
-				break;
-			default:
-				break;
-		}
+		// Reduce one third the number of ways of clos
+		if (ways <= 2)
+			LOGINF("[LLC] Already reached minimum ways!");
+		else
+			half_ways = ways/3;
+	} else {
+		// Reduce two thirds the number of ways of clos
+		if (ways <= 2)
+			LOGINF("[LLC] Already reached minimum ways!");
+		else
+			half_ways = 2 * (ways/3);
 	}
 
-	uint64_t num_ways = __builtin_popcount(LinuxBase::get_cat()->get_cbm(clos));
-    uint64_t mask = LinuxBase::get_cat()->get_cbm(clos);
-	LOGINF("[LLC] CLOS {} now has mask {:#x} ({} ways)"_format(clos, mask, num_ways));
-	limit = true;
+	LOGINF("[LLC] CLOS {} reduced from {} to {} ways"_format(clos,ways,half_ways));
+	uint32_t reduced_ways = ways - half_ways;
+	for(uint32_t i=0; i<reduced_ways; i++)
+		schem = (schem << 1) & mask_MAX;
+	LOGINF("[LLC] CLOS {} new mask: {:#x}"_format(clos, schem));
+	LinuxBase::get_cat()->set_cbm(clos,schem);
 }
 
 void CriticalPhaseAware::divide_half_ways_critical(uint64_t clos, uint32_t cr_apps)
@@ -2303,12 +2249,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 							LOGINF("[LLC] Medium behavior! Limit space to CLOS {}"_format(CLOSvalue));
 							if ((critical_apps < 3) && (limit == false))
 								divide_half_ways_critical(CLOSvalue, critical_apps);
-							else {
-								if (limit)
-									divide_3_critical(CLOSvalue, true); // 2/3
-								else
-									divide_3_critical(CLOSvalue, false); // 1/3
-							}
+							else if (critical_apps == 3)
+								divide_3_critical(CLOSvalue, limit);
 
 							limit_task[taskID] = true;
 							limit = true;
