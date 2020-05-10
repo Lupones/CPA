@@ -272,6 +272,10 @@ class CriticalPhaseAware: public LinuxBase
 	uint64_t mask_CRCLOS_3 = 0xfffc0;
 	uint64_t mask_NCRCLOS_3 = 0x000ff;
 
+	// Threshold to consider non-critical app as greedy
+	// 15% of ways_MAX
+	double limit_space_ncr = ways_MAX * 0.15;
+
 	// SQUANDERER and NON-CRITICAL GREEDY APPLICATIONS
 	// CLOSes 5 and 6
 	// 10% ways to each one,

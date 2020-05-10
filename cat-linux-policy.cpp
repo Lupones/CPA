@@ -1894,8 +1894,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 
 		// Calculate limit space to consider a task Greedy
 		double limit_space = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1)) / 3;
-		if (limit_space > 3)
-			limit_space = 3;
+		if (limit_space > limit_space_ncr)
+			limit_space = limit_space_ncr;
 
 		//uint32_t countCLOS;
 		//const auto &taskCLOS = tasks_find(tasklist, taskID);
