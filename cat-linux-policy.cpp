@@ -2334,8 +2334,8 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 
 					// State actions switch-case
 					uint64_t max = 0;
-					uint64_t noncritical_apps = 8 - critical_apps;
-					uint64_t limit_critical = 22 - noncritical_apps;
+					uint64_t noncritical_apps = tasklist.size() - critical_apps;
+					uint64_t limit_critical = (ways_MAX + 2) - noncritical_apps;
 					uint64_t num_ways_CLOS_1 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
 					uint64_t num_ways_CLOS_2 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(2));
 					uint64_t num_ways_CLOS_3 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(3));
@@ -2350,7 +2350,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 							LOGINF("NCR-- (Remove one shared way from CLOS with non-critical "
 								   "apps)");
 							if (num_ways_CLOS_1 > noncritical_apps) {
-								maskNonCrCLOS = (maskNonCrCLOS >> 1) | mask_min_right;
+								maskNonCrCLOS = (maskNonCrCLOS >> 1) & mask_MAX;
 								LinuxBase::get_cat()->set_cbm(1, maskNonCrCLOS);
 							} else
 								LOGINF("Non-critical apps. have reached limit space.");
@@ -2417,7 +2417,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 
 				uint64_t maxways = std::max(num_ways_CLOS_2, num_ways_CLOS_3);
 				maxways = std::max(maxways, num_ways_CLOS_4);
-				int64_t aux_ns = (num_ways_CLOS_2 + num_ways_CLOS_1) - 20;
+				int64_t aux_ns = (num_ways_CLOS_2 + num_ways_CLOS_1) - ways_MAX;
 				int64_t num_shared_ways = (aux_ns < 0) ? 0 : aux_ns;
 				LOGINF("Number of shared ways: {}"_format(num_shared_ways));
 				assert(num_shared_ways >= 0);
