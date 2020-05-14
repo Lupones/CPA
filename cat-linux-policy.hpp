@@ -307,6 +307,7 @@ class CriticalPhaseAware: public LinuxBase
 	// Critical applications variables
 	uint32_t critical_apps = 0;
 	std::map<uint64_t,double> LLCoccup_critical;
+	//std::map<uint64_t,double> LLCoccup_noncritical;
 	double LLC_critical = 0;
 	double LLC_ways_space = 0;
 	std::set<uint32_t> CLOS_critical = {2, 3, 4};
@@ -351,6 +352,16 @@ class CriticalPhaseAware: public LinuxBase
 	typedef std::tuple<uint32_t, pid_t> pair32P_t;
     std::vector<pair_t> taskIsInCRCLOS;
 	std::vector<pair32P_t> id_pid;
+	std::vector<pairD_t> LLCoccup_noncritical;
+
+	/* Comparison function to sort the vector elements
+	// by second element of tuples
+	bool sortbysec(const std::tuple<uint32_t, double>& a,
+               const std::tuple<uint32_t, double>& b)
+	{
+    	return (std::get<1>(a) > std::get<1>(b));
+	}*/
+
 
     public:
 
