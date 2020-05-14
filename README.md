@@ -1,7 +1,7 @@
 # Critical Phase-Aware (CPA) Partitioning Approach 
 
 CPA is LLC (Last Level Cache) partitioning approach that performs an efficient cache space distribution among executing applications. To assign partitions (ways) of the LLC, Intel CAT is used.
-This policy is included in a framework named **manager** which is able to launch the experiments. 
+This policy  is included in a framework named **manager** which is able to launch the experiments. 
 
 ### Experimental Platform
 
@@ -19,7 +19,7 @@ A step by step series of examples that tell you how to get a development env run
 manager$ ln -s FILE_PATH_LINUX_FILES Linux
 ```
 
-2. Download/clone (and build if needed) all the necessary libraries into their corresponding folders:
+2. Download/clone (and build if needed) all the necessary libraries, each into a new folder:
 - [libcpuid: a small C library for x86 CPU detection and feature extraction](https://github.com/anrieff/libcpuid)
 - [FMT: a modern formatting library](https://github.com/fmtlib/fmt)
 - [cxx-prettyprint: a C++ library that allows automagic pretty-printing](https://github.com/louisdx/cxx-prettyprint)
@@ -41,15 +41,19 @@ manager/libminiperf$ cd ..
 manager$ make
 ```
 
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
-
 ## Running the tests
 
-Explain how to run the automated tests for this system
+A **test** folder has been included that includes 3 folders (noPart, CA and CPA). [Critical-Aware (CA) Partitioning Policy](https://doi.org/10.1007/978-3-319-96983-1_43) is also included in the framework.
 
-### Break down into end to end tests
+Each folder includes a file, **template.mako**, that indicates the policy to launch as well as other execution parameters such as the performance counters that are going to be monitored. 
 
-Explain what these tests test and why
+A **workloads.yaml** file is also needed. This file specifies the workload mixes to launch. Each line represents a mix, and each application in the mix is separated by a coma. The file **manager/scripts/templates/applications.mako** specifies each of the applications that can be used. **IMPORTANT NOTE: The root of the applications needs to be modified to adapt to your file path.**
+
+To launch a given experiment, execute the following command
+```
+manager/test/FOLDER# bash ~/manager/scripts/launch.bash ../workloads.yaml
+```
+
+By default, experiments are launched 3 times. In **scripts/launch.bash** you can find the possible parameters that can be speficied.
+
+
