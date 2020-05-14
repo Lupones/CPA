@@ -83,25 +83,6 @@ std::shared_ptr<cat::policy::Base> config_read_cat_policy(const YAML::Node &conf
 
 		return std::make_shared<cat::policy::CriticalAware>(every, firstInterval);
 	}
-	if (kind == "cav4")
-	{
-		LOGINF("Using Critical-Aware (cav4) CAT policy");
-
-		// Check that required fields exist
-		for (string field : {"every", "firstInterval", "IDLE_INTERVALS", "ipc_threshold", "ipc_ICOV_threshold"})
-		{
-			if (!policy[field])
-				throw_with_trace(std::runtime_error("The '" + kind + "' CAT policy needs the '" + field + "' field"));
-		}
-		// Read fields
-		uint64_t every = policy["every"].as<uint64_t>();
-		uint64_t firstInterval = policy["firstInterval"].as<uint64_t>();
-		uint64_t IDLE_INTERVALS = policy["IDLE_INTERVALS"].as<uint64_t>();
-		double ipc_threshold = policy["ipc_threshold"].as<double>();
-		double ipc_ICOV_threshold = policy["ipc_ICOV_threshold"].as<double>();
-
-		return std::make_shared<cat::policy::CriticalAwareV4>(every, firstInterval, IDLE_INTERVALS, ipc_threshold, ipc_ICOV_threshold);
-	}
  	else if (kind == "cpa")
 	{
 		LOGINF("Using Critical Phase-Aware (CPA) CAT policy");
@@ -140,157 +121,6 @@ std::shared_ptr<cat::policy::Base> config_read_cat_policy(const YAML::Node &conf
 		return std::make_shared<cat::policy::NoPart>(every, stats);
 
 	}
-	else if (kind == "sfcoa")
-	{
-		vector<string> required = {"kind", "every", "model"};
-		vector<string> allowed  = {"num_clusters", "alternate_sides", "min_stall_ratio", "detect_outliers", "eval_clusters", "cluster_sizes", "min_max"};
-		vector<std::pair<string, string>> incompatible = {
-				{"num_clusters", "eval_clusters"},
-				{"num_clusters", "cluster_sizes"},
-				{"eval_clusters", "cluster_sizes"},
-				{"min_max", "num_clusters"},
-				{"min_max", "cluster_sizes"},
-				{"min_max", "eval_clusters"},
-		};
-
-		config_check_fields(policy, required, allowed);
-
-		// Check that there are not incompatible fields
-		for (const auto &pair : incompatible)
-		{
-			if (policy[pair.first] && policy[pair.second])
-				LOGWAR("Fields {} and {} cannot be used together in the {} policy"_format(pair.first, pair.second, kind));
-		}
-
-		// Read fields
-		uint64_t every = policy["every"].as<uint64_t>();
-		uint32_t num_clusters = policy["num_clusters"] ? policy["num_clusters"].as<uint32_t>() : 0;
-		string model = policy["model"].as<string>();
-		bool alternate_sides = policy["alternate_sides"] ? policy["alternate_sides"].as<bool>() : false;
-		double min_stall_ratio = policy["min_stall_ratio"] ? policy["min_stall_ratio"].as<double>() : 0;
-		bool detect_outliers = policy["detect_outliers"] ? policy["detect_outliers"].as<bool>() : false;
-		string eval_clusters = policy["eval_clusters"] ? policy["eval_clusters"].as<string>() : "dunn";
-		vector<uint32_t> cluster_sizes = policy["cluster_sizes"] ? policy["cluster_sizes"].as<vector<uint32_t>>() : vector<uint32_t>();
-		bool min_max = policy["min_max"] ? policy["min_max"].as<bool>() : false;
-
-		LOGINF("Using Slowfirst Clustered Optimally and Adjusted (sfcoa) CAT policy");
-		return std::make_shared<cat::policy::SfCOA>(every, num_clusters, model, alternate_sides, min_stall_ratio, detect_outliers, eval_clusters, cluster_sizes, min_max);
-	}
-
-	// Cluster and distribute
-	else if (kind == "cad")
-	{
-		vector<string> required = {"kind", "clustering", "distribution"};
-		vector<string> allowed  = {"every"};
-
-		config_check_fields(policy, required, allowed);
-
-		// Read fields
-		uint64_t every = policy["every"] ? policy["every"].as<uint64_t>() : 1;
-
-		// Clustering
-		assert(policy["clustering"] && policy["clustering"].IsMap());
-		string clustering = policy["clustering"]["kind"].as<string>();
-		cat::policy::ClusteringBase_ptr_t clustering_ptr;
-
-		if (clustering == "kmeans")
-		{
-			config_check_fields(policy["clustering"], {"kind", "num_clusters", "event"}, {"max_clusters", "eval_clusters", "sort_clusters"});
-			int num_clusters = policy["clustering"]["num_clusters"].as<int>();
-			int max_clusters = policy["clustering"]["max_clusters"] ?
-					policy["clustering"]["max_clusters"].as<int>() :
-					cat_read_info()["L3"].num_closids;
-			EvalClusters eval_clusters = str_to_evalclusters(policy["eval_clusters"] ?
-					policy["eval_clusters"].as<string>() :
-					"dunn");
-			auto event = policy["clustering"]["event"].as<string>();
-			auto sort = policy["clustering"]["sort_clusters"].as<string>();
-			bool sort_ascending = false;
-			if (sort == "ascending")
-				sort_ascending = true;
-			else if (sort != "descending")
-				throw_with_trace(std::runtime_error("The value of 'sort_clusters' can only be 'ascending' or 'decending'"));
-
-			clustering_ptr = std::make_shared<cat::policy::Cluster_KMeans>(num_clusters, max_clusters, eval_clusters, event, sort_ascending);
-		}
-		else if (clustering == "sf")
-		{
-			config_check_fields(policy["clustering"], {"kind", "cluster_sizes"}, {});
-			if (!policy["clustering"]["cluster_sizes"].IsSequence())
-				throw_with_trace(std::runtime_error("The field 'cluster_sizes' must be a sequance of integers"));
-
-			auto cluster_sizes = policy["clustering"]["cluster_sizes"].as<vector<int>>();
-			clustering_ptr = std::make_shared<cat::policy::Cluster_SF>(cluster_sizes);
-		}
-		else
-		{
-			throw_with_trace(std::runtime_error("Unknown clustering policy {}"_format(clustering)));
-		}
-
-		// Distribution
-		assert(policy["distribution"] && policy["distribution"].IsMap());
-		string distribution = policy["distribution"]["kind"].as<string>();
-		cat::policy::DistributingBase_ptr_t distribution_ptr;
-
-		if (distribution == "n")
-		{
-			config_check_fields(policy["distribution"], {"kind", "n"}, {});
-			int n = policy["distribution"]["n"].as<int>();
-			distribution_ptr = std::make_shared<cat::policy::Distribute_N>(n);
-		}
-		else if (distribution == "relfunc")
-		{
-			config_check_fields(policy["distribution"], {"kind"}, {"invert_metric", "min_ways", "max_ways"});
-			auto invert_metric = policy["distribution"]["invert_metric"] ?
-					policy["distribution"]["invert_metric"].as<bool>() :
-					false;
-			auto min_ways = policy["distribution"]["min_ways"] ?
-					policy["distribution"]["min_ways"].as<int>() :
-					2;
-			auto max_ways = policy["distribution"]["max_ways"] ?
-					policy["distribution"]["max_ways"].as<int>() :
-					20;
-			distribution_ptr = std::make_shared<cat::policy::Distribute_RelFunc>(min_ways, max_ways, invert_metric);
-		}
-		else if (distribution == "static")
-		{
-			auto masks = policy["distribution"]["masks"].as<cbms_t>();
-			distribution_ptr = std::make_shared<cat::policy::Distribute_Static>(masks);
-		}
-		else
-		{
-			throw_with_trace(std::runtime_error("Unknown distribution policy {}"_format(distribution)));
-		}
-
-		LOGINF("Using {} CAT policy"_format(kind));
-		return std::make_shared<cat::policy::ClusterAndDistribute>(every, clustering_ptr, distribution_ptr);
-	}
-
-	// Square wave
-	else if (kind == "squarewave")
-	{
-		vector<string> required = {"kind", "waves"};
-		vector<string> allowed  = {};
-
-		config_check_fields(policy, required, allowed);
-
-		// Read waves
-		assert(policy["waves"].IsSequence());
-		typedef cat::policy::SquareWave::Wave wave_t;
-		auto waves = std::vector<wave_t>();
-		required = {"interval", "up", "down"};
-		for (auto node : policy["waves"])
-		{
-			config_check_required_fields(node, required);
-			wave_t wave = wave_t(
-					node["interval"].as<decltype(wave_t::interval)>(),
-					node["up"].as<decltype(wave_t::up)>(),
-					node["down"].as<decltype(wave_t::down)>());
-			waves.push_back(wave);
-		}
-		return std::make_shared<cat::policy::SquareWave>(waves);
-	}
-
 	else
 		throw_with_trace(std::runtime_error("Unknown CAT policy: '" + kind + "'"));
 }
@@ -481,25 +311,6 @@ sched::ptr_t config_read_sched(const YAML::Node &config)
 			LOGDEB("The Linux scheduler ingrores the 'every' option");
 		config_check_fields(sched, required, allowed);
 		return std::make_shared<sched::Base>(every, allowed_cpus);
-	}
-
-	if (kind == "random")
-	{
-		config_check_fields(sched, required, allowed);
-		return std::make_shared<sched::Random>(every, allowed_cpus);
-	}
-
-	if (kind == "fair")
-	{
-		required.push_back("event");
-		required.push_back("weights");
-		allowed.push_back("at_least_one");
-		config_check_fields(sched, required, allowed);
-
-		string event = sched["event"].as<string>();
-		std::vector<uint32_t> weights = sched["weights"].as<decltype(weights)>();
-		bool at_least_one = sched["at_least_one"] ? sched["at_least_one"].as<bool>() : false;
-		return std::make_shared<sched::Fair>(every, allowed_cpus, event, weights, at_least_one);
 	}
 
 	throw_with_trace(std::runtime_error("Invalid sched kind '{}'"_format(kind)));

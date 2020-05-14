@@ -41,41 +41,6 @@ class Base
 };
 typedef std::shared_ptr<Base> ptr_t;
 
-
-class Fair : public Base
-{
-	std::default_random_engine generator;
-
-	std::string event;
-	std::vector<uint32_t> weights;
-	bool at_least_one;
-	std::map<uint32_t, bool> sched_last;
-
-	public:
-
-	Fair() = delete;
-	Fair(uint32_t _every, const std::vector<uint32_t> &_cpus, const std::string &_event, const std::vector<uint32_t> &_weights, bool _at_least_one) :
-			Base(_every, _cpus), event(_event), weights(_weights), at_least_one(_at_least_one) {};
-	~Fair() = default;
-
-	virtual tasklist_t apply(uint64_t current_interval, const tasklist_t &tasklist) override;
-};
-
-
-class Random : public Base
-{
-	std::map<uint32_t, bool> sched_last;
-
-	public:
-
-	Random() = default;
-	Random(uint32_t _every, const std::vector<uint32_t> &_cpus) : Base(_every, _cpus) {};
-	~Random() = default;
-
-	virtual tasklist_t apply(uint64_t current_interval, const tasklist_t &tasklist) override;
-};
-
-
 class Status
 {
 	std::map<std::string, std::string> d;
