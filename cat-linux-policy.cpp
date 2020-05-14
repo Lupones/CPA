@@ -30,9 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fmt/format.h>
 
 #include "cat-linux-policy.hpp"
-#include "kmeans.hpp"
 #include "log.hpp"
-
 
 namespace cat
 {

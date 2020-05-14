@@ -7,7 +7,7 @@ CXXFLAGS += -Wall -Wshadow -g -O0 -std=c++14
 LIBS = -lpthread -lrt -lboost_system -lboost_log -lboost_log_setup -lboost_thread -lboost_filesystem -lyaml-cpp -lpqos -lboost_program_options -lglib-2.0 -lpcm -lfmt -lminiperf -ldl -lbacktrace -lm -lbfd -l:libcpuid.a
 
 
-SRCS = cat-intel.cpp cat-linux.cpp cat-policy.cpp cat-linux-policy.cpp common.cpp config.cpp events-perf.cpp log.cpp manager.cpp kmeans.cpp stats.cpp sched.cpp task.cpp
+SRCS = cat-intel.cpp cat-linux.cpp cat-policy.cpp cat-linux-policy.cpp common.cpp config.cpp events-perf.cpp log.cpp manager.cpp stats.cpp sched.cpp task.cpp
 
 
 manager: $(SRCS:.cpp=.o) libminiperf/libminiperf.a
