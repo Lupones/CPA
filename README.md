@@ -13,13 +13,14 @@ The system was running an Ubuntu 16.04 with Linux kernel version 4.11.
 
 A step by step series of examples that tell you how to get a development env running
 
-1. Download or link the linux source files to the Linux folder 
+1. Download or link the Linux source files to the Linux folder 
 
 ```
 manager$ ln -s FILE_PATH_LINUX_FILES Linux
 ```
 
 2. Download/clone (and build if needed) all the necessary libraries, each into a new folder:
+- Linux Perf tool in the Linux source files
 - [libcpuid: a small C library for x86 CPU detection and feature extraction](https://github.com/anrieff/libcpuid)
 - [FMT: a modern formatting library](https://github.com/fmtlib/fmt)
 - [cxx-prettyprint: a C++ library that allows automagic pretty-printing](https://github.com/louisdx/cxx-prettyprint)
