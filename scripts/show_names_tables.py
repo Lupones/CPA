@@ -48,6 +48,9 @@ def main():
         dictNames[name] = df
 
     # add values
+    phase_changes = 0
+    CLOS_changes = 0
+
     for policy in args.policies:
         numW = 0
         print(policy)
@@ -70,6 +73,13 @@ def main():
 
                 if name == "interval" or "power" in name:
                     df.ix[numW,policy] = dfworkload[name+':mean'].max()
+
+                    if policy == "CPA_0.2":
+                        print(dfworkload[["app","phase_changes:mean","CLOS_changes:mean"]])
+                        phase_changes = phase_changes + dfworkload["phase_changes:mean"].sum()
+                        CLOS_changes = CLOS_changes + dfworkload["CLOS_changes:mean"].sum()
+                        print(dfworkload["CLOS_changes:mean"].sum())
+
                     #df.ix[numW,policy+':std'] = dfworkload[name+':std'].max()
                 elif name == "geoipc":
                     df.ix[numW, policy] = scipy.stats.gmean(dfworkload['ipc:mean'],axis=0)
@@ -90,18 +100,18 @@ def main():
         for policy in args.policies:
             if policy != args.defaultPolicy:
                 if name == "geoipc":
-                    df["%gain"+policy] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
+                    df["%gain"+policy+":mean"] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
                 elif name == "ipc":
-                    df["%gain"+policy] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
+                    df["%gain"+policy+":mean"] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
                     #df["%gainCAV2"] = ((df["criticalAwareV2"] / df["noPart"]) - 1) * 100
                 else:
-                    df["%gain"+policy] = ((df[args.defaultPolicy] / df[policy]) - 1) * 100
+                    df["%gain"+policy+":mean"] = ((df[args.defaultPolicy] / df[policy]) - 1) * 100
                     #df["%gainCAV2"] = ((df["noPart"] / df["criticalAwareV2"]) - 1) * 100
 
         print(name)
         for policy in args.policies:
             if policy != args.defaultPolicy:
-                print('{}: {:.2f}'.format(policy,df["%gain"+policy].mean()))
+                print('{}: {:.2f}'.format(policy,df["%gain"+policy+":mean"].mean()))
         #print(df["%gainCAV2"].mean())
         print(" ")
 
@@ -111,6 +121,13 @@ def main():
         outputPathPolicy = outputPath + "/" + show_name + "table.csv"
         df.to_csv(outputPathPolicy, sep=',')
         dictNames[name] = df
+
+    CLOS_changes = CLOS_changes/31
+    phase_changes = phase_changes/248
+    print("-----------")
+    print('phase_changes = {:.2f}'.format(phase_changes))
+    print('CLOS_changes = {:.2f}'.format(CLOS_changes))
+    print("-----------")
 
 
 if __name__ == "__main__":

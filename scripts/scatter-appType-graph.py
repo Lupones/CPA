@@ -54,7 +54,7 @@ def main():
     outputPath = os.path.abspath(args.outputdir)
     os.makedirs(os.path.abspath(outputPath), exist_ok=True)
 
-    colors = itertools.cycle(["r", "b", "g", "m", "c"])
+    colors = itertools.cycle(['#377eb8', '#ff7f00', '#4daf4a','#f781bf', '#a65628', '#984ea3','#999999', '#e41a1c', '#dede00'])
 
     MPKIL3_15std = 0
     MPKIL3_3std = 0
@@ -128,10 +128,10 @@ def main():
             plt.ylim(0,15)
             if metric == "HPKIL3:mean":
                 plt.xlim(0,45)
-                plt.axvline(x=10, color='k', linestyle='--')
-                plt.axvline(x=0.5, color='k', linestyle='--')
-                plt.axhline(y=0.5, color='k', linestyle='--')
-                plt.axhline(y=10, color='k', linestyle='--')
+                #plt.axvline(x=10, color='k', linestyle='--')
+                #plt.axvline(x=0.5, color='k', linestyle='--')
+                #plt.axhline(y=0.5, color='k', linestyle='--')
+                #plt.axhline(y=10, color='k', linestyle='--')
                 plt.xlabel("HPKI_LLC")
             elif metric == "l3_Mbytes_occ:mean":
                 plt.xlim(0,20)
