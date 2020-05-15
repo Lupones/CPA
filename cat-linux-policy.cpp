@@ -1625,7 +1625,13 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 		});
 		double MPKIL3Task = std::get<1>(*itM);
 
-		if ((l3_occup_mb > limit_space) && (HPKIL3Task < 0.5) && (MPKIL3Task < 0.5)) {
+		// Find IPC
+		auto it = std::find_if(v_ipc.begin(), v_ipc.end(),[&taskID](const auto &tuple) {
+			return std::get<0>(tuple) == taskID;
+		});
+		double ipcTask = std::get<1>(*it);
+
+		if ((ipcTask >= ipcMedium) && (l3_occup_mb >= limit_space) && (HPKIL3Task < 0.5) && (MPKIL3Task < 0.5)) {
 			// 4. NON-CRITICAL GREEDY
 			LOGINF("[ISO] {}: has l3_occup_mb {} > {} -> isolate!"_format(taskID, l3_occup_mb, limit_space));
 			if (n_isolated_apps < 2) {
