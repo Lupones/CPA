@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# $1 = experiment (e.g. 170919)
-# $2 = policy (e.g. criticalAware)
+# $1 = experiment folder name (e.g. 170919)
+# $2 = policy (e.g. CPA)
 
-inputdir=/home/lupones/manager/experiments/$1/$2/log
-outputdir=/home/lupones/manager/experiments/$1/overhead/
+inputdir=~/manager/tests/$1/$2/log
+outputdir=~/manager/tests/$1/overhead/
 
 mkdir $outputdir
 

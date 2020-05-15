@@ -21,9 +21,6 @@ def main():
 
     # dictionary with names of headers of data we want to include in the tables
     dictNames = {}
-    # policies used
-    #policies = ['noPart', 'criticalAware', 'criticalAwareV2']
-    #policies = ['noPart', 'criticalAware']
 
     # include names in dictionary
     for name in args.names:
@@ -103,18 +100,14 @@ def main():
                     df["%gain"+policy+":mean"] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
                 elif name == "ipc":
                     df["%gain"+policy+":mean"] = ((df[policy] / df[args.defaultPolicy]) - 1) * 100
-                    #df["%gainCAV2"] = ((df["criticalAwareV2"] / df["noPart"]) - 1) * 100
                 else:
                     df["%gain"+policy+":mean"] = ((df[args.defaultPolicy] / df[policy]) - 1) * 100
-                    #df["%gainCAV2"] = ((df["noPart"] / df["criticalAwareV2"]) - 1) * 100
 
         print(name)
         for policy in args.policies:
             if policy != args.defaultPolicy:
                 print('{}: {:.2f}'.format(policy,df["%gain"+policy+":mean"].mean()))
-        #print(df["%gainCAV2"].mean())
         print(" ")
-
 
         # save tables
         df  = df.set_index(['Workload_ID'])
