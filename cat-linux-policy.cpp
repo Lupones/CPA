@@ -850,6 +850,7 @@ void CriticalPhaseAware::update_configuration(std::vector<pair_t> v, std::vector
 		case 3:
 			maskNCR = mask_NCRCLOS_3;
 			maskCR = mask_CRCLOS_3;
+			break;
 		default:
 			break;
 	}
@@ -1103,7 +1104,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 					LOGINF("[LLC] Limiting task {} was not good! -> return its ways"_format(taskID));
 					limit_task[taskID] = false;
 					limit = false;
-					uint64_t ways = 20;
+					uint64_t ways = ways_MAX;
 					if (critical_apps == 1) {
 						LinuxBase::get_cat()->set_cbm(1, mask_NCRCLOS_1);
 						ways = __builtin_popcount(mask_NCRCLOS_1);
@@ -1393,7 +1394,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 	LOGINF("[LLC] Total LLCoccup_critical = {}"_format(LLC_critical));
 
 	// Check CLOS are configured to the correct mask
-	uint64_t ways = 20;
+	uint64_t ways = ways_MAX;
 	if (firstTime) {
 		// Set ways of CLOSes 1 and 2, [3, 4]
 		switch (critical_apps) {
@@ -1712,14 +1713,14 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 			uint64_t max = 0;
 			uint64_t noncritical_apps = tasklist.size() - critical_apps;
 			uint64_t limit_critical = (ways_MAX + 2) - noncritical_apps;
-			uint64_t num_ways_CLOS_1 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(1));
-			uint64_t num_ways_CLOS_2 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(2));
-			uint64_t num_ways_CLOS_3 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(3));
-			uint64_t num_ways_CLOS_4 = __builtin_popcount(LinuxBase::get_cat()->get_cbm(4));
 			uint64_t maskNonCrCLOS = LinuxBase::get_cat()->get_cbm(1);
 			uint64_t maskCLOS2 = LinuxBase::get_cat()->get_cbm(2);
 			uint64_t maskCLOS3 = LinuxBase::get_cat()->get_cbm(3);
 			uint64_t maskCLOS4 = LinuxBase::get_cat()->get_cbm(4);
+			uint64_t num_ways_CLOS_1 = __builtin_popcount(maskNonCrCLOS);
+			uint64_t num_ways_CLOS_2 = __builtin_popcount(maskCLOS2);
+			uint64_t num_ways_CLOS_3 = __builtin_popcount(maskCLOS3);
+			uint64_t num_ways_CLOS_4 = __builtin_popcount(maskCLOS4);
 
 			switch (state) {
 				case 5:
@@ -1793,7 +1794,7 @@ void CriticalPhaseAware::apply(uint64_t current_interval, const tasklist_t &task
 
 		uint64_t maxways = std::max(num_ways_CLOS_2, num_ways_CLOS_3);
 		maxways = std::max(maxways, num_ways_CLOS_4);
-		int64_t aux_ns = (num_ways_CLOS_2 + num_ways_CLOS_1) - ways_MAX;
+		int64_t aux_ns = (maxways + num_ways_CLOS_1) - ways_MAX;
 		int64_t num_shared_ways = (aux_ns < 0) ? 0 : aux_ns;
 		LOGINF("Number of shared ways: {}"_format(num_shared_ways));
 		assert(num_shared_ways >= 0);
